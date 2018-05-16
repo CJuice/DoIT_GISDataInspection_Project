@@ -13,7 +13,7 @@ class FeatureClassObject(object):
         self.date_export = date_export
 
         
-    def writeFeatureClassProperties(self):
+    def write_feature_class_properties(self):
         object_features_list = [self.fc_ID, self.ADM_ID, self.feature_dataset, self.fc_name, self.data_type,
                                 self.shape_type, self.spatial_ref_name, self.fc_feature_count, self.date_export]
         for i in range(len(object_features_list)):

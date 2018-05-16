@@ -28,6 +28,5 @@ class GeodatabaseDomains(object):
                               self.domain_type, self.type, coded_values_keys_list,
                               coded_values_values_list, self.range, self.date]
         for i in range(len(record_values_list)):
-            strTemp = str(record_values_list[i])
-            record_values_list[i] = strTemp.replace(",", "|")
+            record_values_list[i] = (str(record_values_list[i])).replace(",", "|")
         return ",".join(record_values_list)
