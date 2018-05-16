@@ -1,6 +1,2 @@
-.idea/
+*.idea
 *.pyc
-EnterpriseGDBInventoryTESTGDB.gdb
-EnterpriseGDBInventoryTESTGDB.gdb/
-testing_links.txt
-Example Of How to Start Py Script with Shortcut.lnk
