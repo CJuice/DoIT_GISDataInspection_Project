@@ -140,7 +140,7 @@ class UtilityClassFunctionality(object):
             if value < 10:
                 return "0" + str(value)
             else:
-                return value
+                return str(value)
         date_today = datetime.date.today()
         day = handle_under_ten(date_today.day)
         month = handle_under_ten(date_today.month)
