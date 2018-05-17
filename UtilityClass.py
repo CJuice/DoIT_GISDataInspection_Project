@@ -136,23 +136,15 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def get_date_parts():
         import datetime
+        def handle_under_ten(value):
+            if value < 10:
+                return "0" + str(value)
+            else:
+                return value
         date_today = datetime.date.today()
-        day = None
-        month = None
-        year = None
-        full_date = None
-        int_day = date_today.day
-        if int_day < 10:
-            day = "0" + str(int_day)
-        else:
-            day = str(int_day)
-        int_month = date_today.month
-        if int_month < 10:
-            month = "0" + str(int_month)
-        else:
-            month = str(int_month)
-        int_year = date_today.year
-        year = str(int_year)
+        day = handle_under_ten(date_today.day)
+        month = handle_under_ten(date_today.month)
+        year = str(date_today.year)
         full_date = year + month + day
         date_parts_list = [full_date, year, month, day]
         return date_parts_list

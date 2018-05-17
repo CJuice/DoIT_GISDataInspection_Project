@@ -1,8 +1,8 @@
 """
 Access an sde geodatabase and inventory the feature classes and inspect the data. Output results to sql database.
 Inputs:  User defined folder choice (integer)
-Outputs:  Text csv file
-Compatibility: Revised on 20180118 for Python 3.5 (ESRI ArcPro python version)
+Outputs:  sql database
+Compatibility: Revised on 20180118 for Python 3.6 (ESRI ArcPro python version)
 Author:  CJuice on GitHub
 Date Created:  05/02/2017
 Revised:  Forked from EnterpriseGDBIntentory project. Tailored to DoIT needs for GIS data inspection.
@@ -21,6 +21,9 @@ from UtilityClass import UtilityClassFunctionality as myutil
     #named tuple definition
 Variable = namedtuple("Variable", "value")
     #non-constants
+date_parts = myutil.get_date_parts()
+date_today = date_parts[0] #Original date format
+date_today_database_field = "{}/{}/{}".format(date_parts[2], date_parts[3], date_parts[1]) #redesigned date format to meet Access database format for Date TODO - assess this
 domain_objects_list = None
 feature_classes_list = None
 feature_dataset_ADMs_list = []
@@ -68,11 +71,6 @@ else:
         log_level=myutil.ERROR_LEVEL)
     exit()
 
-date_parts = myutil.get_date_parts()
-date_today = date_parts[0] #Original date format
-date_today_database_field = "{}/{}/{}".format(
-    date_parts[2], date_parts[3], date_parts[1]) #redesigned date format to meet Access database format for Date TODO - assess this
-
 #TODO: condense below repetition
 output_feature_class_file = os.path.join(output_file_directory, "{}_{}__FeatureClassInventory.csv".format(
     date_today, os.path.basename(sde_files_path)))
@@ -102,9 +100,9 @@ for pairing in file_and_headers_pairing:
     try:
         with open(file_element, "w") as fhand:
             fhand.write(",".join(header_element) + "\n")
-    except:
+    except Exception as e:
         myutil.print_and_log(
-            message="Problem creating or checking existence of {} file.\n".format(file_element),
+            message="Problem creating or checking existence of {} file.\n{}".format(file_element, e),
             log_level=myutil.ERROR_LEVEL)
         exit()
 
@@ -126,30 +124,30 @@ env_name = sde_filename_parts_list[0]
 # Open/Create the output files for results to be appended.
 try:
     fhand = open(output_feature_class_file, "a")
-except:
+except Exception as e:
     myutil.print_and_log(
-        message="Feature Class File did not open. Iteration: {}\n".format(sde_environment_filename),
+        message="Feature Class File did not open. Iteration: {}\n{}".format(sde_environment_filename, e),
         log_level=myutil.ERROR_LEVEL)
     exit()
 try:
     fhand_fields_file = open(output_fields_file, "a")
-except:
+except Exception as e:
     myutil.print_and_log(
-        message="Fields File did not open. Iteration: {}\n".format(sde_environment_filename),
+        message="Fields File did not open. Iteration: {}\n{}".format(sde_environment_filename, e),
         log_level=myutil.ERROR_LEVEL)
     exit()
 try:
     fhand_domains_file = open(output_domains_file, "a")
-except:
+except Exception as e:
     myutil.print_and_log(
-        message="Domains File did not open. Iteration: {}\n".format(sde_environment_filename),
+        message="Domains File did not open. Iteration: {}\n{}".format(sde_environment_filename, e),
         log_level=myutil.ERROR_LEVEL)
     exit()
 try:
     arcpy.env.workspace = sde_files_path
-except:
+except Exception as e:
     myutil.print_and_log(
-        message="Problem establishing workspace: {}\n".format(sde_files_path),
+        message="Problem establishing workspace: {}\n".format(sde_files_path, e),
         log_level=myutil.ERROR_LEVEL)
     exit()
 myutil.print_and_log(
@@ -159,9 +157,9 @@ myutil.print_and_log(
 #   an environment, to prevent duplicates in file, the environment name is checked for previous use/examination.
 try:
     domain_objects_list = run_ESRI_GP_tool(arcpy.da.ListDomains)
-except:
+except Exception as e:
     myutil.print_and_log(
-        message="arcpy.da.ListDomains() failed",
+        message="arcpy.da.ListDomains() failed. {}".format(e),
         log_level=myutil.ERROR_LEVEL)
     exit()
 
@@ -176,9 +174,9 @@ else:
 # make a list of feature classes present, outside of Feature Datasets
 try:
     feature_classes_list = run_ESRI_GP_tool(arcpy.ListFeatureClasses)
-except:
+except Exception as e:
     myutil.print_and_log(
-        message="Error creating list of feature classes outside of feature datasets",
+        message="Error creating list of feature classes outside of feature datasets. {}".format(e),
         log_level=myutil.ERROR_LEVEL)
     exit()
 
@@ -218,25 +216,25 @@ try:
                                                                          feature_class_name=feature_class_name,
                                                                          arcpy_describe_object=fc_desc,
                                                                          date_export=date_today_database_field)
-                except:
+                except Exception as e:
                     myutil.print_and_log(
-                        message="FeatureClassObject didn't instantiate: {}".format(fc),
+                        message="FeatureClassObject didn't instantiate: {}. {}".format(fc, e),
                         log_level=myutil.WARNING_LEVEL)
                 try:
 
                     # Get the feature count
                     fc_obj.fc_feature_count = int(arcpy.GetCount_management(fc).getOutput(0))
-                except:
+                except Exception as e:
                     myutil.print_and_log(
-                        message="Error getting feature class feature count: {}".format(fc),
+                        message="Error getting feature class feature count: {}. {}".format(fc, e),
                         log_level=myutil.WARNING_LEVEL)
                 try:
                     fhand.write("{}\n".format(fc_obj.write_feature_class_properties()))
-                except:
+                except Exception as e:
                     myutil.print_and_log(
-                        message="Did not write FC properties to file: {}".format(fc),
+                        message="Did not write FC properties to file: {}. {}".format(fc, e),
                         log_level=myutil.WARNING_LEVEL)
-            except:
+            except Exception as e:
                 # For feature classes that don't process correctly this records their presence so don't go undocumented.
                 fhand.write("{},{},{},{},ERROR,ERROR,ERROR,{},{}\n".format(feature_class_ID, adm_ID,
                                                                            feature_dataset_name,
@@ -244,9 +242,9 @@ try:
                                                                            fc_obj.fc_feature_count,
                                                                            date_today_database_field))
                 myutil.print_and_log(
-                    message="{},{},{},{},ERROR,ERROR,ERROR,{},{}".format(feature_class_ID, adm_ID, feature_dataset_name,
+                    message="{},{},{},{},ERROR,ERROR,ERROR,{},{}\n{}".format(feature_class_ID, adm_ID, feature_dataset_name,
                                                                  feature_class_name, fc_obj.fc_feature_count,
-                                                                 date_today_database_field),
+                                                                 date_today_database_field, e),
                     log_level=myutil.ERROR_LEVEL)
 
             try:
@@ -261,37 +259,37 @@ try:
                         feature_class_field_details = FeatureClassObject_Class.FeatureClassFieldDetails(
                             feature_class_fields_list=feature_class_fields_list,
                             field_ID=field_ID, feature_class_ID=feature_class_ID, field=field)
-                    except:
+                    except Exception as e:
                         myutil.print_and_log(
-                            message="FeatureClassFieldDetailsObject didn't instantiate: {}".format(field_ID),
+                            message="FeatureClassFieldDetailsObject didn't instantiate: {}. {}".format(field_ID, e),
                             log_level=myutil.WARNING_LEVEL)
                     try:
                         fhand_fields_file.write("{}\n".format(
                             feature_class_field_details.write_feature_class_field_properties()))
-                    except:
+                    except Exception as e:
                         myutil.print_and_log(
-                            message="Did not write fcFieldDetails properties to file: {}".format(field_ID),
+                            message="Did not write fcFieldDetails properties to file: {}. {}".format(field_ID, e),
                             log_level=myutil.WARNING_LEVEL)
-            except:
+            except Exception as e:
                 # For fc field details that don't process correctly this records their presence so don't go undocumented.
                 fhand_fields_file.write("{},{},ERROR,ERROR,ERROR,ERROR,ERROR,ERROR,ERROR,ERROR,ERROR,ERROR\n".format(
                     field_ID, feature_class_ID))
                 myutil.print_and_log(
-                    message="Error with writing field details for {}".format(field_ID),
+                    message="Error with writing field details for {}. {}".format(field_ID, e),
                     log_level=myutil.ERROR_LEVEL)
     else:
         pass
-except:
+except Exception as e:
     myutil.print_and_log(
-        message="Problem iterating through feature classes", log_level=myutil.ERROR_LEVEL)
+        message="Problem iterating through feature classes. {}".format(e), log_level=myutil.ERROR_LEVEL)
     exit()
 
 # make a list of feature datasets present.
 try:
     feature_datasets_list = run_ESRI_GP_tool(arcpy.ListDatasets)
-except:
+except Exception as e:
     myutil.print_and_log(
-        message="arcpy.ListDatasets did not run properly", log_level=myutil.ERROR_LEVEL)
+        message="arcpy.ListDatasets did not run properly. {}".format(e), log_level=myutil.ERROR_LEVEL)
     exit()
 
 feature_dataset_name = "" # resetting from above because it is used below.
@@ -310,9 +308,9 @@ if len(feature_datasets_list) > 0:
 
         try:
             feature_classes_list = run_ESRI_GP_tool(arcpy.ListFeatureClasses)
-        except:
+        except Exception as e:
             myutil.print_and_log(
-                message="Error creating list of feature classes inside of feature dataset: {}".format(fd),
+                message="Error creating list of feature classes inside of feature dataset: {}. {}".format(fd, e),
                 log_level=myutil.WARNING_LEVEL)
         try:
             for fc in feature_classes_list:
@@ -338,36 +336,37 @@ if len(feature_datasets_list) > 0:
                                                                              feature_class_name=feature_class_name,
                                                                              arcpy_describe_object=fc_desc,
                                                                              date_export=date_today_database_field)
-                    except:
+                    except Exception as e:
                         myutil.print_and_log(
-                            message="FeatureClassObject didn't instantiate".format(fc),
+                            message="FeatureClassObject didn't instantiate. {}".format(fc, e),
                             log_level=myutil.WARNING_LEVEL)
                     try:
 
                         # Get the feature count
                         fc_obj.fc_feature_count = int(arcpy.GetCount_management(fc).getOutput(0))
-                    except:
+                    except Exception as e:
                         myutil.print_and_log(
-                            message="Error getting feature class feature count: {}".format(fc),
+                            message="Error getting feature class feature count: {}. {}".format(fc, e),
                             log_level=myutil.WARNING_LEVEL)
                     try:
                         fhand.write("{}\n".format(fc_obj.write_feature_class_properties()))
-                    except:
+                    except Exception as e:
                         myutil.print_and_log(
-                            message="Did not write FC properties to file: {}".format(fc),
+                            message="Did not write FC properties to file: {}. {}".format(fc, e),
                             log_level=myutil.WARNING_LEVEL)
-                except:
+                except Exception as e:
                     # For fc that don't process correctly this records their presence so don't go undocumented.
                     fhand.write("{},{},{},{},ERROR,ERROR,ERROR,{},{}\n".format(
                         feature_class_ID, adm_ID, feature_dataset_name, feature_class_name,
                         fc_obj.fc_feature_count, date_today_database_field))
                     myutil.print_and_log(
-                        message="{},{},{},{},ERROR,ERROR,ERROR,{},{}".format(feature_class_ID,
+                        message="{},{},{},{},ERROR,ERROR,ERROR,{},{}\n{}".format(feature_class_ID,
                                                                              adm_ID,
                                                                              feature_dataset_name,
                                                                              feature_class_name,
                                                                              fc_obj.fc_feature_count,
-                                                                             date_today_database_field),
+                                                                             date_today_database_field,
+                                                                                 e),
                         log_level=myutil.ERROR_LEVEL)
 
                 try:
@@ -382,32 +381,31 @@ if len(feature_datasets_list) > 0:
                             feature_class_field_details = FeatureClassObject_Class.FeatureClassFieldDetails(
                                 feature_class_fields_list=feature_class_fields_list, field_ID=field_ID,
                                 feature_class_ID=feature_class_ID, field=field)
-                        except:
+                        except Exception as e:
                             myutil.print_and_log(
-                                message="FeatureClassFieldDetailsObject didn't instantiate: {}".format(fc),
+                                message="FeatureClassFieldDetailsObject didn't instantiate: {}. {}".format(fc,e),
                                 log_level=myutil.WARNING_LEVEL)
                         try:
                             fhand_fields_file.write(
                                 feature_class_field_details.write_feature_class_field_properties() + "\n")
-                        except:
+                        except Exception as e:
                             myutil.print_and_log(
-                                message="Did not write fcFieldDetails properties to file: {}".format(
-                                    feature_class_field_details),
+                                message="Did not write fcFieldDetails properties to file: {}. {}".format(
+                                    feature_class_field_details, e),
                                 log_level=myutil.WARNING_LEVEL)
                             print("")
-                except:
-
+                except Exception as e:
 
                     # For fc field details that don't process correctly this records their presence so don't go undocumented.
                     fhand_fields_file.write(
                         "{},{},ERROR,ERROR,ERROR,ERROR,ERROR,ERROR,ERROR,ERROR,ERROR,ERROR\n".format(
                             field_ID, feature_class_ID))
                     myutil.print_and_log(
-                        message="Error with writing field details for {}\n".format(field_ID),
+                        message="Error with writing field details for {}. {}".format(field_ID, e),
                         log_level=myutil.ERROR_LEVEL)
-        except:
+        except Exception as e:
             myutil.print_and_log(
-                message="Problem iterating through feature classes within feature dataset: {}".format(fd),
+                message="Problem iterating through feature classes within feature dataset: {}. {}".format(fd, e),
                 log_level=myutil.WARNING_LEVEL)
 else:
     pass
