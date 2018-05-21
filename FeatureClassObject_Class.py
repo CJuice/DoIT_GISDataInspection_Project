@@ -13,7 +13,7 @@ class FeatureClassObject(object):
         self.date_export = date_export
 
         
-    def write_feature_class_properties(self):
+    def generate_feature_class_properties_string(self):
         object_features_list = [self.fc_ID, self.ADM_ID, self.feature_dataset, self.fc_name, self.data_type,
                                 self.shape_type, self.spatial_ref_name, self.fc_feature_count, self.date_export]
         for i in range(len(object_features_list)):
@@ -38,7 +38,7 @@ class FeatureClassFieldDetails(object):
         self.field_scale = field.scale
         self.field_required = field.required
         
-    def write_feature_class_field_properties(self):
+    def generate_feature_class_field_properties_string(self):
         object_features_list = [self.field_ID, self.fc_ID, self.field_alias, self.field_name, self.field_type,
                                 self.field_def_value, self.field_domain,
                             self.field_is_nullable, self.field_length, self.field_precision, self.field_scale,
