@@ -1,2 +1,4 @@
 *.idea
 *.pyc
+OUTPUT_CSVs
+SDE_CONNECTION_FILE
