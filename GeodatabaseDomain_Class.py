@@ -1,6 +1,13 @@
 from UtilityClass import UtilityClassFunctionality as myutil
+from collections import namedtuple
 
-class GeodatabaseDomains(object):
+class GeodatabaseDomains():
+    """
+
+    """
+    Variable = namedtuple("Variable", "value")  # named tuple definition
+    DOMAIN_HEADERS_LIST = Variable(value=("DOM_NAME", "DOM_DESC", "DOM_DOMTYPE", "DOM_DATATYPE", "DOM_CODEDVALKEYS",
+                                          "DOM_CODEDVALVALUES", "DOM_RANGE", "DOM_ID", "DATE", "ROW_ID"))
     def __init__(self, environment_name, domain_object, date):
         self.environment_name = environment_name
         self.domain_object = domain_object

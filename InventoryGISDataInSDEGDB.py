@@ -19,24 +19,15 @@ import FeatureClassObject_Class
 import GeodatabaseDomain_Class
 import logging
 import os
-
+import time
 
 #_______________________________________________________________________________________________________________________
 # VARIABLES
     #CONSTANTS
 Variable = namedtuple("Variable", "value") # named tuple definition
 DATABASE_FLAG_NUMERIC = Variable(value=-9999)
-DOMAIN_HEADERS_LIST = Variable(value=("DOM_NAME", "DOM_DESC", "DOM_DOMTYPE", "DOM_DATATYPE", "DOM_CODEDVALKEYS",
-                                      "DOM_CODEDVALVALUES", "DOM_RANGE", "DOM_ID", "DATE", "ROW_ID"))
 DOMAINS_INVENTORY_FILE_NAME = Variable(value="GeodatabaseDomainsInventory")
-FC_HEADERS_LIST = Variable(value=("FC_NAME", "FC_DATATYPE", "FC_SHAPETYPE", "FC_TOTALCOLUMNCOUNT",
-                                             "FC_FEATURECOUNT", "FC_TOTALVALUECOUNT", "FC_TOTALNULLVALUECOUNT",
-                                             "FC_PERCENTNULL", "FC_SPATIALREFNAME", "FD_NAME", "FC_ID",
-                                             "DATE", "ROW_ID"))
 FC_INVENTORY_FILE_NAME = Variable(value="FeatureClassInventory")
-FIELD_HEADERS_LIST = Variable(value=("FLD_ALIAS", "FLD_NAME", "FLD_TOTALNULLVALUECOUNT", "FLD_TOTALVALUECOUNT", "FLD_PERCENTNULL", "FLD_TYPE",
-                                     "FLD_DEF_VAL", "FLD_DOMAIN", "FLD_ISNULLABLE", "FLD_LENGTH", "FLD_MAXCHARLEN",
-                                     "FLD_PRECISION", "FLD_SCALE", "FLD_REQUIRED", "FLD_ID", "FC_ID", "DATE", "ROW_ID"))
 FIELD_INVENTORY_FILE_NAME = Variable(value="FeatureClassFIELDSInventory")
 LOG_FILE_NAME = Variable(value="EnterpriseGDBInventory_LOG.log")
 ROOT_PATH_FOR_CSV_OUTPUT = Variable(value=r"E:\DoIT_GISDataInspection_Project\OUTPUT_CSVs")
@@ -85,14 +76,13 @@ def main():
     #_______________________________________________________________________________________________________________________
     # FUNCTIONALITY
     import arcpy # delayed arcpy import for performance
-    arcpy.env.workspace = SDE_file_path
 
     # OUTPUT FILES: Create the new output files for the feature class inventory with headers
     output_feature_class_file, output_fields_file, output_domains_file = tuple(
         [os.path.join(output_file_directory, item) for item in output_file_names_tuple])
-    file_and_headers_pairing = [(output_feature_class_file, FC_HEADERS_LIST.value),
-                                (output_fields_file, FIELD_HEADERS_LIST.value),
-                                (output_domains_file, DOMAIN_HEADERS_LIST.value)]
+    file_and_headers_pairing = [(output_feature_class_file, FeatureClassObject_Class.FeatureClassObject.FC_HEADERS_LIST.value),
+                                (output_fields_file, FeatureClassObject_Class.FeatureClassFieldDetails.FIELD_HEADERS_LIST.value),
+                                (output_domains_file, GeodatabaseDomain_Class.GeodatabaseDomains.DOMAIN_HEADERS_LIST.value)]
     for pairing in file_and_headers_pairing:
         file_element, header_element = pairing
         try:
@@ -102,6 +92,7 @@ def main():
             myutil.print_and_log(message="Problem creating or checking existence of {} file. {}".format(file_element, e),
                 log_level=myutil.ERROR_LEVEL)
             exit()
+
     # ESTABLISH SDE CONNECTION
     try:
         arcpy.env.workspace = SDE_file_path
@@ -113,7 +104,6 @@ def main():
         myutil.print_and_log(message="Accessing {}\n".format(arcpy.env.workspace), log_level=myutil.INFO_LEVEL)
 
     # DOMAINS: make a list of domains for the geodatabase workspace environment.
-    domain_row_ID = None
     sde_environment_filename = os.path.basename(SDE_file_path)
     fhand_domains_file_handler = create_output_results_file_handler(output_filename=output_domains_file)
     try:
@@ -123,7 +113,6 @@ def main():
         exit()
     else:
         for domain_object in domain_objects_list:
-
             gdb_domain_obj = GeodatabaseDomain_Class.GeodatabaseDomains(environment_name=sde_environment_filename,
                                                                         domain_object=domain_object,
                                                                         date=myutil.build_today_date_string())
@@ -142,11 +131,10 @@ def main():
     except Exception as e:
         myutil.print_and_log(message="arcpy.ListDatasets did not run properly. {}".format(e), log_level=myutil.ERROR_LEVEL)
         exit()
-
-    # inspect each FD, then all FC's within, then fields of each FC
-    #   Assumption: DoIT naming is a three part convention. Environment_Name.SDE.Entity_Data_Name for
-    #               example Production.SDE.Transportation_Mile_Markers_etc . Coded for this, makes code brittle
-
+    """Inspect each FD, then all FC's within, then fields of each FC. Assumption: DoIT naming is a three part 
+    convention. Environment_Name.SDE.Entity_Data_Name for example Production.SDE.Transportation_Mile_Markers_etc .
+     Coded for this, makes code brittle"""
+    feature_datasets_list.sort()
     # FD Inspection
     for fd in feature_datasets_list:
         myutil.print_and_log(message="Examining FD: {}".format(fd),log_level=myutil.INFO_LEVEL)
@@ -166,8 +154,8 @@ def main():
         fhand_fields_file_handler = create_output_results_file_handler(output_filename=output_fields_file)
 
         # FC's Inspection
+        print("\tFC List: {}".format(feature_classes_list))
         try:
-            print("\tFC List: {}".format(feature_classes_list))
             for fc in feature_classes_list:
                 production_fc, sde_fc_ID, feature_class_name = fc.split(".") # first two vars are not used
                 fc_id = myutil.generate_id_from_args(fd, feature_class_name)
@@ -196,6 +184,8 @@ def main():
                     # fc_desc = arcpy.Describe(fc)
                     fc_desc = run_ESRI_GP_tool(arcpy.Describe, fc)
                 except Exception as e:
+                    fhand_featureclass_file_handler.write(
+                        "{}\n".format(fc_obj.generate_feature_class_properties_string()))
                     myutil.print_and_log(
                         message="{}. {}".format(
                             "Error generating Describe Object. Basic FC object record written. Fields object skipped.",
@@ -209,6 +199,11 @@ def main():
                     fc_obj.spatial_ref_name = fc_desc.spatialReference.name
                     fc_field_objects_list = fc_desc.fields
                     fc_field_names_list = [field_obj.baseName for field_obj in fc_field_objects_list]
+
+                    #NOTE: Due to a SQL error, needed to created prevent_SQL_error() function
+                    #ERROR: "Attribute column not found [42S22:[Microsoft][ODBC Driver 13 for SQL Server][SQL Server]Invalid column name 'AREA'.]"
+                    fc_field_names_list, fc_field_objects_list = myutil.prevent_SQL_error(fc_field_names_list, fc_field_objects_list)
+
                     fc_field_name_to_obj_dict = dict(zip(fc_field_names_list, fc_field_objects_list))
                     total_field_count = len(fc_field_objects_list)
                     fc_obj.total_field_count = total_field_count
@@ -223,7 +218,6 @@ def main():
 
                     # Access data values and analyze
                     try:
-                        # print(fc_field_names_list)
                         with arcpy.da.SearchCursor(fc, fc_field_names_list) as feature_class_cursor:
                             # print("context manager established")
                             for row in feature_class_cursor:
@@ -240,7 +234,7 @@ def main():
                                                                             record_dictionary=row_dictionary,
                                                                             field_name_to_field_object_dictionary=fc_field_name_to_obj_dict)
                                 # print(string_fields_character_tracker_dict)
-                                print("_____CURSOR WORKED_____")
+                                # print("_____CURSOR WORKED_____\n")
                     except Exception as e:
                         myutil.print_and_log(message="Error in cursor for FC: {}.\n\t{}".format(fc, e),
                                              log_level=myutil.WARNING_LEVEL)
@@ -258,14 +252,14 @@ def main():
                         fhand_featureclass_file_handler.write("{}\n".format(fc_obj.generate_feature_class_properties_string()))
                     except Exception as e:
                         myutil.print_and_log(message="Did not write FC properties to file: {}. {}".format(fc, e),
-                            log_level=myutil.WARNING_LEVEL)
+                                             log_level=myutil.WARNING_LEVEL)
 
                     # FC's Fields Metadata Inspection
+                    #TODO: null counts are off for fields. All seem to have the same value within a dataset or doesn't reflect reality. See ag permpreserved dataset Comments field
                     for field_object in fc_field_objects_list:
                         field_id = myutil.generate_id_from_args(fc_id, field_object.name)
                         field_row_id = myutil.generate_id_from_args(field_id, myutil.build_today_date_string())
-                        field_total_null_value_count = myutil.calculate_total_number_of_null_values_per_dataset(
-                            null_counts_list=fc_fields_null_value_tracker_dict.values())
+                        field_total_null_value_count = fc_fields_null_value_tracker_dict[field_object.name]
                         field_percent_null = myutil.calculate_percent(field_total_null_value_count, number_of_fc_features)
 
                         # Instantiate the FC field details object

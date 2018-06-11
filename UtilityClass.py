@@ -186,6 +186,23 @@ class UtilityClassFunctionality(object):
         return dict(zip(dataset_headers_list, record_list))
 
     @staticmethod
+    def prevent_SQL_error(field_names_list, field_objects_list):
+        """
+        TODO
+        :param field_names_list:
+        :param field_objects_list:
+        :return:
+        """
+        remove_these_fields = ["shape", "area", "len"]
+        field_names_list_for_mod = [name for name in field_names_list]
+        for field_name in field_names_list_for_mod:
+            if field_name.lower() in remove_these_fields:
+                index = field_names_list.index(field_name)
+                del field_names_list[index]
+                del field_objects_list[index]
+        return (field_names_list, field_objects_list)
+
+    @staticmethod
     def print_and_log(message, log_level):
         """
         Print and log any provided message based on the indicated logging level.
