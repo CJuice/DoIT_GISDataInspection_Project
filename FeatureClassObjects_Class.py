@@ -46,6 +46,7 @@ class FeatureClassFieldDetails():
                                          "FLD_ID", "FC_ID", "DATE", "ROW_ID"))
     def __init__(self, field_id, fc_id, field_object, total_record_count, total_null_value_count, percent_null,
                  date_export, row_id):
+        print(field_object.domain)
         self.date_export = date_export
         self.fc_ID = fc_id
         self.field_alias = field_object.aliasName.strip()
@@ -72,12 +73,12 @@ class FeatureClassFieldDetails():
     def field_domain(self, value):
         if value is None:
             self.__field_domain = "None"
-        elif len(str(value)) == 0:
+        elif len(str(value).strip()) == 0:
             self.__field_domain = "None"
         elif len(value.strip()) == 0:
             self.__field_domain = "None"
         else:
-            pass
+            self.__field_domain = value
         return
 
     def generate_feature_class_field_properties_string(self):

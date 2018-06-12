@@ -15,7 +15,7 @@ Modifications:
 from collections import namedtuple
 from datetime import date
 from UtilityClass import UtilityClassFunctionality as myutil
-import FeatureClassObject_Class
+import FeatureClassObjects_Class
 import GeodatabaseDomain_Class
 import logging
 import os
@@ -80,8 +80,8 @@ def main():
     # OUTPUT FILES: Create the new output files for the feature class inventory with headers
     output_feature_class_file, output_fields_file, output_domains_file = tuple(
         [os.path.join(output_file_directory, item) for item in output_file_names_tuple])
-    file_and_headers_pairing = [(output_feature_class_file, FeatureClassObject_Class.FeatureClassObject.FC_HEADERS_LIST.value),
-                                (output_fields_file, FeatureClassObject_Class.FeatureClassFieldDetails.FIELD_HEADERS_LIST.value),
+    file_and_headers_pairing = [(output_feature_class_file, FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value),
+                                (output_fields_file, FeatureClassObjects_Class.FeatureClassFieldDetails.FIELD_HEADERS_LIST.value),
                                 (output_domains_file, GeodatabaseDomain_Class.GeodatabaseDomains.DOMAIN_HEADERS_LIST.value)]
     for pairing in file_and_headers_pairing:
         file_element, header_element = pairing
@@ -131,6 +131,7 @@ def main():
     except Exception as e:
         myutil.print_and_log(message="arcpy.ListDatasets did not run properly. {}".format(e), log_level=myutil.ERROR_LEVEL)
         exit()
+
     """Inspect each FD, then all FC's within, then fields of each FC. Assumption: DoIT naming is a three part 
     convention. Environment_Name.SDE.Entity_Data_Name for example Production.SDE.Transportation_Mile_Markers_etc .
      Coded for this, makes code brittle"""
@@ -141,7 +142,8 @@ def main():
         production_fd, sde_fd_ID, feature_dataset_name = fd.split(".") # first two vars are not used
 
 
-        # if feature_dataset_name != "Geoscientific_MD_OffshoreOceanResources":
+        # FEATURE DATASET ISOLATION - TESTING
+        # if feature_dataset_name != "PlanningCadastre_MD_LandUseLandCover":
         #     continue
 
 
@@ -165,7 +167,8 @@ def main():
                 production_fc, sde_fc_ID, feature_class_name = fc.split(".") # first two vars are not used
 
 
-                # if feature_class_name != "GSCI_BottomClassOffshoreWind2015_DNR":
+                # FEATURE CLASS ISOLATION - TESTING
+                # if feature_class_name != "PLAN_CountyLandUseLandCover2010_MDP":
                 #     continue
 
 
@@ -174,11 +177,11 @@ def main():
                 number_of_fc_features = DATABASE_FLAG_NUMERIC.value
 
                 # Instantiate object. Set other finicky parameters as they become available. Write out at end.
-                fc_obj = FeatureClassObject_Class.FeatureClassObject(fc_ID=fc_id,
-                                                                     feature_dataset_name=feature_dataset_name,
-                                                                     feature_class_name=feature_class_name,
-                                                                     date_export=myutil.build_today_date_string(),
-                                                                     row_id=fc_row_id)
+                fc_obj = FeatureClassObjects_Class.FeatureClassObject(fc_ID=fc_id,
+                                                                      feature_dataset_name=feature_dataset_name,
+                                                                      feature_class_name=feature_class_name,
+                                                                      date_export=myutil.build_today_date_string(),
+                                                                      row_id=fc_row_id)
                 # Get the feature count
                 try:
                     feature_count_result = run_ESRI_GP_tool(arcpy.GetCount_management, fc)
@@ -212,7 +215,6 @@ def main():
                     #NOTE: Due to a SQL error, needed to created prevent_SQL_error() function
                     #ERROR: "Attribute column not found [42S22:[Microsoft][ODBC Driver 13 for SQL Server][SQL Server]Invalid column name 'AREA'.]"
                     fc_field_names_list, fc_field_objects_list = myutil.prevent_SQL_error(fc_field_names_list, fc_field_objects_list)
-
                     fc_field_name_to_obj_dict = dict(zip(fc_field_names_list, fc_field_objects_list))
                     total_field_count = len(fc_field_objects_list)
                     fc_obj.total_field_count = total_field_count
@@ -264,27 +266,27 @@ def main():
                         field_percent_null = myutil.calculate_percent(field_total_null_value_count, number_of_fc_features)
 
                         # Instantiate the FC field details object
-                        fc_field_details_obj = FeatureClassObject_Class.FeatureClassFieldDetails(field_id=field_id,
-                                                                                                 fc_id=fc_id,
-                                                                                                 field_object=field_object,
-                                                                                                 total_record_count=number_of_fc_features,
-                                                                                                 total_null_value_count=field_total_null_value_count,
-                                                                                                 percent_null=field_percent_null,
-                                                                                                 date_export=myutil.build_today_date_string(),
-                                                                                                 row_id=field_row_id)
+                        fc_field_details_obj = FeatureClassObjects_Class.FeatureClassFieldDetails(field_id=field_id,
+                                                                                                  fc_id=fc_id,
+                                                                                                  field_object=field_object,
+                                                                                                  total_record_count=number_of_fc_features,
+                                                                                                  total_null_value_count=field_total_null_value_count,
+                                                                                                  percent_null=field_percent_null,
+                                                                                                  date_export=myutil.build_today_date_string(),
+                                                                                                  row_id=field_row_id)
 
                         if field_object.name in string_fields_character_tracker_dict.keys():
                             fc_field_details_obj.field_max_chars_used = string_fields_character_tracker_dict[fc_field_details_obj.field_name]
 
                         # Write the field details object to file
                         try:
+                            # print(fc_field_details_obj.generate_feature_class_field_properties_string())
                             fhand_fields_file_handler.write("{}\n".format(
                                 fc_field_details_obj.generate_feature_class_field_properties_string()))
                         except Exception as e:
                             # For fc field details that don't process this records their presence so not undocumented.
                             myutil.print_and_log(message="Did not write FC field details to file: {}{}".format(fc_field_details_obj.row_id, e),
                                                  log_level=myutil.WARNING_LEVEL)
-                # exit()
         except Exception as e:
             myutil.print_and_log(
                 message="Problem iterating through FC's within FD: {}. {}".format(fd, e),log_level=myutil.WARNING_LEVEL)
