@@ -140,6 +140,11 @@ def main():
         myutil.print_and_log(message="Examining FD: {}".format(fd),log_level=myutil.INFO_LEVEL)
         production_fd, sde_fd_ID, feature_dataset_name = fd.split(".") # first two vars are not used
 
+
+        # if feature_dataset_name != "Geoscientific_MD_OffshoreOceanResources":
+        #     continue
+
+
         # Step into each feature dataset by altering the workspace
         arcpy.env.workspace = os.path.join(SDE_file_path, fd)
         feature_classes_list = None
@@ -158,6 +163,12 @@ def main():
         try:
             for fc in feature_classes_list:
                 production_fc, sde_fc_ID, feature_class_name = fc.split(".") # first two vars are not used
+
+
+                # if feature_class_name != "GSCI_BottomClassOffshoreWind2015_DNR":
+                #     continue
+
+
                 fc_id = myutil.generate_id_from_args(fd, feature_class_name)
                 fc_row_id = myutil.generate_id_from_args(fc_id, myutil.build_today_date_string())
                 number_of_fc_features = DATABASE_FLAG_NUMERIC.value
@@ -170,7 +181,6 @@ def main():
                                                                      row_id=fc_row_id)
                 # Get the feature count
                 try:
-                    # feature_count_result = arcpy.GetCount_management(fc)
                     feature_count_result = run_ESRI_GP_tool(arcpy.GetCount_management, fc)
                 except Exception as e:
                     myutil.print_and_log(message="Error getting FC feature count: {}. {}".format(fc, e),
@@ -181,7 +191,6 @@ def main():
 
                 # Get the arcpy.Describe object for each FC. Many elements are dependent on the Describe object
                 try:
-                    # fc_desc = arcpy.Describe(fc)
                     fc_desc = run_ESRI_GP_tool(arcpy.Describe, fc)
                 except Exception as e:
                     fhand_featureclass_file_handler.write(
@@ -219,22 +228,15 @@ def main():
                     # Access data values and analyze
                     try:
                         with arcpy.da.SearchCursor(fc, fc_field_names_list) as feature_class_cursor:
-                            # print("context manager established")
                             for row in feature_class_cursor:
-                                # print(len(fc_field_names_list), fc_field_names_list)
-                                # print(len(row), row)
                                 row_dictionary = myutil.make_zipper(dataset_headers_list=fc_field_names_list,
                                                                     record_list=row)
-                                # print(row_dictionary)
                                 # evaluate data and inventory the null/empty data values
                                 myutil.inspect_record_for_null_values(field_null_count_dict=fc_fields_null_value_tracker_dict,
                                                                       record_dictionary=row_dictionary)
-                                # print(fc_fields_null_value_tracker_dict)
                                 myutil.inspect_string_fields_for_char_usage(field_char_count_dict=string_fields_character_tracker_dict,
                                                                             record_dictionary=row_dictionary,
                                                                             field_name_to_field_object_dictionary=fc_field_name_to_obj_dict)
-                                # print(string_fields_character_tracker_dict)
-                                # print("_____CURSOR WORKED_____\n")
                     except Exception as e:
                         myutil.print_and_log(message="Error in cursor for FC: {}.\n\t{}".format(fc, e),
                                              log_level=myutil.WARNING_LEVEL)
@@ -255,7 +257,6 @@ def main():
                                              log_level=myutil.WARNING_LEVEL)
 
                     # FC's Fields Metadata Inspection
-                    #TODO: null counts are off for fields. All seem to have the same value within a dataset or doesn't reflect reality. See ag permpreserved dataset Comments field
                     for field_object in fc_field_objects_list:
                         field_id = myutil.generate_id_from_args(fc_id, field_object.name)
                         field_row_id = myutil.generate_id_from_args(field_id, myutil.build_today_date_string())
@@ -283,7 +284,7 @@ def main():
                             # For fc field details that don't process this records their presence so not undocumented.
                             myutil.print_and_log(message="Did not write FC field details to file: {}{}".format(fc_field_details_obj.row_id, e),
                                                  log_level=myutil.WARNING_LEVEL)
-                # print("")
+                # exit()
         except Exception as e:
             myutil.print_and_log(
                 message="Problem iterating through FC's within FD: {}. {}".format(fd, e),log_level=myutil.WARNING_LEVEL)

@@ -149,7 +149,7 @@ class UtilityClassFunctionality(object):
         for field_name, value in record_dictionary.items():
             if value is None:
                 field_null_count_dict[field_name] += 1
-            elif len(str(value)) == 0:
+            elif len(str(value).strip()) == 0:
                 field_null_count_dict[field_name] += 1
             elif str(value).strip() == 0:
                 field_null_count_dict[field_name] += 1
@@ -193,7 +193,7 @@ class UtilityClassFunctionality(object):
         :param field_objects_list:
         :return:
         """
-        remove_these_fields = ["shape", "area", "len"]
+        remove_these_fields = ["shape", "area", "len", "starea()", "stlength()"]
         field_names_list_for_mod = [name for name in field_names_list]
         for field_name in field_names_list_for_mod:
             if field_name.lower() in remove_these_fields:
