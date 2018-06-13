@@ -294,7 +294,9 @@ def main():
             fhand_featureclass_file_handler.close()
             fhand_fields_file_handler.close()
 
-    print("\nScript completed.")
+    myutil.print_and_log(
+        message=" {} Script Completed".format(myutil.get_date_time_for_logging_and_printing()),
+        log_level=myutil.INFO_LEVEL)
     return
 
 if __name__ == "__main__":

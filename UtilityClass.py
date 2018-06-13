@@ -122,7 +122,7 @@ class UtilityClassFunctionality(object):
         :return: String Year/Month/Day Hour:Minute:Second usable in logging, and printing statements if desired
         """
         import datetime
-        return '{:%Y/%m/%d %H:%M:%S}'.format(datetime.datetime.now())
+        return '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
 
     @staticmethod
     def generate_id_from_args(*args, separator="."):

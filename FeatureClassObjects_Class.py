@@ -46,7 +46,6 @@ class FeatureClassFieldDetails():
                                          "FLD_ID", "FC_ID", "DATE", "ROW_ID"))
     def __init__(self, field_id, fc_id, field_object, total_record_count, total_null_value_count, percent_null,
                  date_export, row_id):
-        print(field_object.domain)
         self.date_export = date_export
         self.fc_ID = fc_id
         self.field_alias = field_object.aliasName.strip()
