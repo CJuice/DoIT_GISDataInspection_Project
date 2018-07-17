@@ -1,6 +1,5 @@
 """
 Access an sde geodatabase and inventory the feature classes and inspect the data.
-TODO Upsert results to Socrata dataset
 Inputs:  User defined folder choice (integer)
 Outputs:
 Compatibility: Revised on 20180118 for Python 3.6 (ESRI ArcPro python version)
@@ -9,54 +8,63 @@ Date:  05/17/2018
 Revised:  Forked from EnterpriseGDBIntentory project. Tailored to DoIT needs for GIS data inspection.
 Modifications:
 """
+# TODO Upsert results to Socrata dataset
 # TODO: To avoid false zero values in counter dictionaries may need to set initial value to database flag and add functionality to check for flag and reset to zero on first time through
-#_______________________________________________________________________________________________________________________
-# IMPORTS
-from collections import namedtuple
-from datetime import date
-from UtilityClass import UtilityClassFunctionality as myutil
-import FeatureClassObjects_Class
-import GeodatabaseDomain_Class
-import logging
-import os
-import time
-
-#_______________________________________________________________________________________________________________________
-# VARIABLES
-    #CONSTANTS
-Variable = namedtuple("Variable", "value") # named tuple definition
-DATABASE_FLAG_NUMERIC = Variable(value=-9999)
-DOMAINS_INVENTORY_FILE_NAME = Variable(value="GeodatabaseDomainsInventory")
-FC_INVENTORY_FILE_NAME = Variable(value="FeatureClassInventory")
-FIELD_INVENTORY_FILE_NAME = Variable(value="FeatureClassFIELDSInventory")
-LOG_FILE_NAME = Variable(value="EnterpriseGDBInventory_LOG.log")
-ROOT_PATH_FOR_CSV_OUTPUT = Variable(value=r"E:\DoIT_GISDataInspection_Project\OUTPUT_CSVs")
-ROOT_URL_FOR_DATASET_ACCESS = Variable(value=r"https://data.maryland.gov/resource/")
-# SOCRATA_CREDENTIALS_JSON_FILE = Variable(value="")  #TODO
-
-    #non-constants
-domain_objects_list = None
-feature_classes_list = None
-feature_dataset_ADMs_list = []
-feature_datasets_list = None
-feature_dataset_names_list = []
-feature_dataset_parts_dict = {}
-output_file_directory = r"E:\DoIT_GISDataInspection_Project\OUTPUT_CSVs"       #TESTING
-output_file_names_tuple = (myutil.build_csv_file_name_with_date( myutil.build_today_date_string(), FC_INVENTORY_FILE_NAME.value),
-                           myutil.build_csv_file_name_with_date(myutil.build_today_date_string(), FIELD_INVENTORY_FILE_NAME.value),
-                           myutil.build_csv_file_name_with_date(myutil.build_today_date_string(), DOMAINS_INVENTORY_FILE_NAME.value))
-round_count = 0
-SDE_file_path = r"E:\DoIT_GISDataInspection_Project\SDE_CONNECTION_FILE\Production as sde on gis-ags-imap01p.mdgov.maryland.gov.sde"    #TESTING
-
 def main():
-    #_______________________________________________________________________________________________________________________
-    # LOGGING setup
-    logging.basicConfig(filename=LOG_FILE_NAME.value, level=logging.INFO)
+
+    # IMPORTS
+    from collections import namedtuple
+    from datetime import date
+    from UtilityClass import UtilityClassFunctionality as myutil
+    import configparser
+    import FeatureClassObjects_Class
+    import GeodatabaseDomain_Class
+    import logging
+    import os
+    import time
+
+    # VARIABLES
+    CONSTANT = namedtuple("CONSTANT", "value") # named tuple definition
+        # CONSTANTS
+    _ROOT_PATH_FOR_PROJECT = CONSTANT(value=r"E:\DoIT_GISDataInspection_Project")
+    CREDENTIALS_PATH = CONSTANT(r"Docs\credentials.cfg")
+    DATABASE_FLAG_NUMERIC = CONSTANT(value=-9999)
+    DOMAINS_INVENTORY_FILE_NAME = CONSTANT(value="GeodatabaseDomainsInventory")
+    FILE_NAME_FC_INVENTORY = CONSTANT(value="FeatureClassInventory")
+    FILE_NAME_FIELD_INVENTORY = CONSTANT(value="FeatureClassFIELDSInventory")
+    LOG_FILE = CONSTANT(value=os.path.join(_ROOT_PATH_FOR_PROJECT.value, "EnterpriseGDBInventory_LOG.log"))
+    PATH_FOR_CSV_OUTPUT = CONSTANT(value=os.path.join(_ROOT_PATH_FOR_PROJECT.value, "OUTPUT_CSVs"))
+    URL_FOR_DATASET_ACCESS = CONSTANT(value=r"https://data.maryland.gov/resource/")
+    TURN_ON_WRITE_OUTPUT_TO_CSV = CONSTANT(value=True)          # OPTION
+    TURN_ON_UPSERT_OUTPUT_TO_SOCRATA = CONSTANT(value=True)     # OPTION
+    # PATH_SOCRATA_CREDENTIALS_JSON = CONSTANT(value="")  #TODO
+        # OTHER
+    domain_objects_list = None
+    feature_classes_list = None
+    feature_dataset_ADMs_list = []
+    feature_datasets_list = None
+    feature_dataset_names_list = []
+    feature_dataset_parts_dict = {}
+    output_file_directory = r"E:\DoIT_GISDataInspection_Project\OUTPUT_CSVs"       #TESTING
+    output_file_names_tuple = (myutil.build_csv_file_name_with_date( myutil.build_today_date_string(), FILE_NAME_FC_INVENTORY.value),
+                               myutil.build_csv_file_name_with_date(myutil.build_today_date_string(), FILE_NAME_FIELD_INVENTORY.value),
+                               myutil.build_csv_file_name_with_date(myutil.build_today_date_string(), DOMAINS_INVENTORY_FILE_NAME.value))
+    round_count = 0
+    SDE_file_path = r"E:\DoIT_GISDataInspection_Project\SDE_CONNECTION_FILE\Production as sde on gis-ags-imap01p.mdgov.maryland.gov.sde"    #TESTING
+
+    # Need credentials from config file
+    config = configparser.ConfigParser()
+    config.read(filenames=CREDENTIALS_PATH.value)
+    # TODO: flesh out
+    # my_cred_var = config['DEFAULT']["key"]        # use this format to retrieve value from config file.
+
+    # LOGGING
+    logging.basicConfig(filename=LOG_FILE.value, level=logging.INFO)
     myutil.print_and_log(
         message=" {} - {} Initiated".format(myutil.get_date_time_for_logging_and_printing(), os.path.basename(__file__)),
         log_level=myutil.INFO_LEVEL)
 
-    #_______________________________________________________________________________________________________________________
+
     # FUNCTIONS
     def create_output_results_file_handler(output_filename):
         try:
@@ -73,13 +81,22 @@ def main():
         """Pass ESRI geoprocessing function and arguments through Decorator containing error handling functionality"""
         return func(*args, **kwargs)
 
-    #_______________________________________________________________________________________________________________________
-    # FUNCTIONALITY
-    import arcpy # delayed arcpy import for performance
 
-    # OUTPUT FILES: Create the new output files for the feature class inventory with headers
-    output_feature_class_file, output_fields_file, output_domains_file = tuple(
-        [os.path.join(output_file_directory, item) for item in output_file_names_tuple])
+    # FUNCTIONALITY
+    import arcpy  # delayed arcpy import for performance
+
+    if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
+        print("Writing to csv (TURN_ON_WRITE_OUTPUT_TO_CSV.value = True)")
+    if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
+        print("Upserting to Socrata (TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value = True)")
+
+
+    # OUTPUT FILES: Create the new output files, for the feature class inventory, with headers. Streamline and loop.
+        # need paths built
+    output_feature_class_file, output_fields_file, output_domains_file = [os.path.join(output_file_directory, item) for
+                                                                          item in output_file_names_tuple]
+
+        # need pairing of path and headers
     file_and_headers_pairing = [(output_feature_class_file, FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value),
                                 (output_fields_file, FeatureClassObjects_Class.FeatureClassFieldDetails.FIELD_HEADERS_LIST.value),
                                 (output_domains_file, GeodatabaseDomain_Class.GeodatabaseDomains.DOMAIN_HEADERS_LIST.value)]
@@ -155,6 +172,7 @@ def main():
         except Exception as e:
             myutil.print_and_log(message="Error creating list of FC's inside of FD: {}. {}".format(fd, e),
                                  log_level=myutil.WARNING_LEVEL)
+            # TODO: What happens if the list feature classes fails. Do I account for that?
 
         # Open the CSV files in preparation for writing data on all feature classes in a feature dataset
         fhand_featureclass_file_handler = create_output_results_file_handler(output_filename=output_feature_class_file)
@@ -252,6 +270,7 @@ def main():
                     fc_obj.percent_null = fc_percent_null
 
                     # Before launching into field level analysis, write the feature class data to file.
+                    #TODO: Add option test, and upsert to socrata functionality
                     try:
                         fhand_featureclass_file_handler.write("{}\n".format(fc_obj.generate_feature_class_properties_string()))
                     except Exception as e:
@@ -279,6 +298,7 @@ def main():
                             fc_field_details_obj.field_max_chars_used = string_fields_character_tracker_dict[fc_field_details_obj.field_name]
 
                         # Write the field details object to file
+                        # TODO: Add option test, and upsert to socrata functionality
                         try:
                             # print(fc_field_details_obj.generate_feature_class_field_properties_string())
                             fhand_fields_file_handler.write("{}\n".format(
