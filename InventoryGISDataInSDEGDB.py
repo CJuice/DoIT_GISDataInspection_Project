@@ -235,9 +235,16 @@ def main():
                 try:
                     fc_desc = run_ESRI_GP_tool(arcpy.Describe, fc)
                 except Exception as e:
+                    # If the desribe object is unavailable, write the defaults and move on as nothing more can be done
                     if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
                         fhand_featureclass_file_handler.write(
-                            "{}\n".format(fc_obj.create_feature_class_properties_string()))
+                            "{}\n".format(fc_obj.create_CSV_feature_class_properties_string()))
+                    if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
+                        myutil.upsert_to_socrata(client=socrata_featureclass_client,
+                                                 dataset_identifier=featureclasslevel_app_id,
+                                                 zipper=fc_obj.create_zipper(
+                                                     headers_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
+                                                     data_list=fc_obj.object_feature_list_str))
                     myutil.print_and_log(
                         message="{}. {}".format(
                             "Error generating Describe Object. Basic FC object record written. Fields object skipped.",
@@ -294,7 +301,9 @@ def main():
                     # Before launching into field level analysis, write the feature class data to file.
                     if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
                         try:
-                            fhand_featureclass_file_handler.write("{}\n".format(fc_obj.create_feature_class_properties_string()))
+                            print("TEST FC: {}".format(fc_obj.create_CSV_feature_class_properties_string()))
+                            # print(fc_obj.object_feature_list_str)
+                            fhand_featureclass_file_handler.write("{}\n".format(fc_obj.create_CSV_feature_class_properties_string()))
                         except Exception as e:
                             myutil.print_and_log(message="Did not write FC properties to file: {}. {}".format(fc, e),
                                                  log_level=myutil.WARNING_LEVEL)
@@ -327,9 +336,10 @@ def main():
                         # Write the field details object to file
                         if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
                             try:
-                                # print(fc_field_details_obj.generate_feature_class_field_properties_string())
+                                print("TEST FIELD: {}".format(fc_field_details_obj.create_CSV_feature_class_field_properties_string()))
+                                print(fc_field_details_obj.field_max_chars_used)
                                 fhand_fields_file_handler.write("{}\n".format(
-                                    fc_field_details_obj.create_feature_class_field_properties_string()))
+                                    fc_field_details_obj.create_CSV_feature_class_field_properties_string()))
                             except Exception as e:
                                 # For fc field details that don't process this records their presence so not undocumented.
                                 myutil.print_and_log(message="Did not write FC field details to file: {}{}".format(fc_field_details_obj.row_id, e),
