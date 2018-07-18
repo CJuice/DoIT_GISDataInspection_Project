@@ -35,8 +35,7 @@ def main():
     PATH_FOR_CSV_OUTPUT = CONSTANT(value=os.path.join(_ROOT_PATH_FOR_PROJECT.value, "OUTPUT_CSVs"))
     # URL_FOR_DATASET_ACCESS = CONSTANT(value=r"https://data.maryland.gov/resource/")
     TURN_ON_WRITE_OUTPUT_TO_CSV = CONSTANT(value=True)          # OPTION
-    TURN_ON_UPSERT_OUTPUT_TO_SOCRATA = CONSTANT(value=True)     # OPTION
-    # PATH_SOCRATA_CREDENTIALS_JSON = CONSTANT(value="")  #TODO: get credentials ??
+    TURN_ON_UPSERT_OUTPUT_TO_SOCRATA = CONSTANT(value=False)     # OPTION
         # OTHER
     domain_objects_list = None
     feature_datasets_list = None
@@ -44,7 +43,7 @@ def main():
                                myutil.build_csv_file_name_with_date(myutil.build_today_date_string(), FILE_NAME_FIELD_INVENTORY.value),
                                myutil.build_csv_file_name_with_date(myutil.build_today_date_string(), DOMAINS_INVENTORY_FILE_NAME.value))
     # round_count = 0
-    SDE_file_path = r"E:\DoIT_GISDataInspection_Project\SDE_CONNECTION_FILE\Production as sde on gis-ags-imap01p.mdgov.maryland.gov.sde"    #TESTING
+    SDE_file_path = os.path.join(_ROOT_PATH_FOR_PROJECT.value, r"SDE_CONNECTION_FILE\Production as sde on gis-ags-imap01p.mdgov.maryland.gov.sde")    #TESTING
 
     # Need credentials from config file
     config = configparser.ConfigParser()
@@ -168,11 +167,11 @@ def main():
         myutil.print_and_log(message="Examining FD: {}".format(fd),log_level=myutil.INFO_LEVEL)
         production_fd, sde_fd_ID, feature_dataset_name = fd.split(".") # first two vars are not used
 
-
+        # __________________________________
         # FEATURE DATASET ISOLATION - TESTING
-        # if feature_dataset_name != "PlanningCadastre_MD_LandUseLandCover":
-        #     continue
-
+        if feature_dataset_name != "PlanningCadastre_MD_LandUseLandCover":
+            continue
+        # __________________________________
 
         # Step into each feature dataset by altering the workspace
         arcpy.env.workspace = os.path.join(SDE_file_path, fd)
@@ -202,12 +201,14 @@ def main():
         print("\tFC List: {}".format(feature_classes_list))
         try:
             for fc in feature_classes_list:
+                myutil.print_and_log(message="Examining FC: {}".format(fc), log_level=myutil.INFO_LEVEL)
                 production_fc, sde_fc_ID, feature_class_name = fc.split(".") # first two vars are not used
 
-
+                #__________________________________
                 # FEATURE CLASS ISOLATION - TESTING
-                # if feature_class_name != "PLAN_CountyLandUseLandCover2010_MDP":
-                #     continue
+                if feature_class_name != "PLAN_CountyLandUseLandCover2010_MDP":
+                    continue
+                #__________________________________
 
 
                 fc_id = myutil.generate_id_from_args(fd, feature_class_name)
