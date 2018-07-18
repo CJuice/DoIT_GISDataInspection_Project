@@ -6,10 +6,14 @@ class FeatureClassObject():
     """
     # Class to hold feature class objects from the arcpy.Describe functionality
     Variable = namedtuple("Variable", "value")  # named tuple definition
-    FC_HEADERS_LIST = Variable(value=("FC_NAME", "FC_DATATYPE", "FC_SHAPETYPE", "FC_TOTALCOLUMNCOUNT",
-                                             "FC_FEATURECOUNT", "FC_TOTALVALUECOUNT", "FC_TOTALNULLVALUECOUNT",
-                                             "FC_PERCENTNULL", "FC_SPATIALREFNAME", "FD_NAME", "FC_ID",
+    FC_HEADERS_LIST = Variable(value=("Name", "Data Type", "Shape Type", "Total Column Count",
+                                             "Total Record Count", "Total Value Count", "Total Null Value Count",
+                                             "Percent Null", "Spatial Reference Name", "FD_NAME", "FC_ID",
                                              "DATE", "ROW_ID"))
+    # FC_HEADERS_LIST = Variable(value=("FC_NAME", "FC_DATATYPE", "FC_SHAPETYPE", "FC_TOTALCOLUMNCOUNT",
+    #                                          "FC_FEATURECOUNT", "FC_TOTALVALUECOUNT", "FC_TOTALNULLVALUECOUNT",
+    #                                          "FC_PERCENTNULL", "FC_SPATIALREFNAME", "FD_NAME", "FC_ID",
+    #                                          "DATE", "ROW_ID"))
 
     def __init__(self, fc_ID, feature_dataset_name, feature_class_name, date_export, row_id):
         self.data_type = "ERROR"
@@ -58,10 +62,14 @@ class FeatureClassFieldDetails():
     """
     # Class to hold the details on the feature class fields using the arpy.Describe fields info
     Variable = namedtuple("Variable", "value")  # named tuple definition
-    FIELD_HEADERS_LIST = Variable(value=("FLD_ALIAS", "FLD_NAME", "FLD_TOTALNULLVALUECOUNT", "FLD_TOTALVALUECOUNT",
-                                         "FLD_PERCENTNULL", "FLD_TYPE", "FLD_DEF_VAL", "FLD_DOMAIN", "FLD_ISNULLABLE",
-                                         "FLD_LENGTH", "FLD_MAXCHARLEN", "FLD_PRECISION", "FLD_SCALE", "FLD_REQUIRED",
+    FIELD_HEADERS_LIST = Variable(value=("Alias", "Name", "Total Null Value Count", "Total Value Count",
+                                         "Percent Null", "Type", "Default Value", "Domain", "Is Nullable",
+                                         "Length", "Max Character Length Found", "Precision", "Scale", "Required",
                                          "FLD_ID", "FC_ID", "DATE", "ROW_ID"))
+    # FIELD_HEADERS_LIST = Variable(value=("FLD_ALIAS", "FLD_NAME", "FLD_TOTALNULLVALUECOUNT", "FLD_TOTALVALUECOUNT",
+    #                                      "FLD_PERCENTNULL", "FLD_TYPE", "FLD_DEF_VAL", "FLD_DOMAIN", "FLD_ISNULLABLE",
+    #                                      "FLD_LENGTH", "FLD_MAXCHARLEN", "FLD_PRECISION", "FLD_SCALE", "FLD_REQUIRED",
+    #                                      "FLD_ID", "FC_ID", "DATE", "ROW_ID"))
     def __init__(self, field_id, fc_id, field_object, total_record_count, total_null_value_count, percent_null,
                  date_export, row_id):
         self.date_export = date_export
