@@ -35,7 +35,7 @@ def main():
     PATH_FOR_CSV_OUTPUT = CONSTANT(value=os.path.join(_ROOT_PATH_FOR_PROJECT.value, "OUTPUT_CSVs"))
     # URL_FOR_DATASET_ACCESS = CONSTANT(value=r"https://data.maryland.gov/resource/")
     TURN_ON_WRITE_OUTPUT_TO_CSV = CONSTANT(value=True)          # OPTION
-    TURN_ON_UPSERT_OUTPUT_TO_SOCRATA = CONSTANT(value=False)     # OPTION
+    TURN_ON_UPSERT_OUTPUT_TO_SOCRATA = CONSTANT(value=True)     # OPTION
         # OTHER
     domain_objects_list = None
     feature_datasets_list = None
@@ -130,21 +130,28 @@ def main():
         exit()
     else:
         sde_environment_filename = os.path.basename(SDE_file_path)
+
         for domain_object in domain_objects_list:
             gdb_domain_obj = GeodatabaseDomain_Class.GeodatabaseDomains(environment_name=sde_environment_filename,
                                                                         domain_object=domain_object,
                                                                         date=myutil.build_today_date_string())
+            domain_object_feature_list = gdb_domain_obj.create_object_feature_list()
+            domain_object_feature_list_str = gdb_domain_obj.create_object_feature_list_str(
+                domain_object_feature_list=domain_object_feature_list)
             if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
                 try:
-                    fhand_domains_file_handler.write("{}\n".format(gdb_domain_obj.create_domain_properties_string()))
+                    fhand_domains_file_handler.write("{}\n".format(gdb_domain_obj.create_CSV_domain_properties_string(
+                        object_feature_list_str=domain_object_feature_list_str)))
                 except Exception as e:
                     myutil.print_and_log(message="Did not write domains properties to file: {}. {}".format(domain_object.name, e),
                         log_level=myutil.WARNING_LEVEL)
             if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
                 myutil.upsert_to_socrata(client=socrata_domains_client,
                                          dataset_identifier=domainlevel_app_id,
-                                         zipper=gdb_domain_obj.create_zipper(headers_list=GeodatabaseDomain_Class.GeodatabaseDomains.DOMAIN_HEADERS_LIST.value,
-                                                                             data_list=gdb_domain_obj.object_feature_list_str))
+                                         zipper=gdb_domain_obj.create_zipper(
+                                             headers_list=GeodatabaseDomain_Class.GeodatabaseDomains.DOMAIN_HEADERS_LIST.value,
+                                             data_list=domain_object_feature_list_str)
+                                         )
     finally:
         if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
             fhand_domains_file_handler.close()
@@ -201,7 +208,7 @@ def main():
         print("\tFC List: {}".format(feature_classes_list))
         try:
             for fc in feature_classes_list:
-                myutil.print_and_log(message="Examining FC: {}".format(fc), log_level=myutil.INFO_LEVEL)
+                myutil.print_and_log(message="\tExamining FC: {}".format(fc), log_level=myutil.INFO_LEVEL)
                 production_fc, sde_fc_ID, feature_class_name = fc.split(".") # first two vars are not used
 
                 #__________________________________
@@ -242,11 +249,14 @@ def main():
                             "{}\n".format(fc_obj.create_CSV_feature_class_properties_string(
                                 object_features_list_str=fc_object_features_list)))
                     if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
+                        fc_object_features_list = fc_obj.create_object_feature_list()
+                        fc_object_features_list_str = fc_obj.create_object_feature_list_str(
+                            object_features_list=fc_object_features_list)
                         myutil.upsert_to_socrata(client=socrata_featureclass_client,
                                                  dataset_identifier=featureclasslevel_app_id,
                                                  zipper=fc_obj.create_zipper(
                                                      headers_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
-                                                     data_list=fc_obj.object_feature_list_str))
+                                                     data_list=fc_object_features_list_str))
                     myutil.print_and_log(
                         message="{}. {}".format(
                             "Error generating Describe Object. Basic FC object record written. Fields object skipped.",
@@ -344,16 +354,19 @@ def main():
                         if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
                             try:
                                 fhand_fields_file_handler.write("{}\n".format(
-                                    fc_field_details_obj.create_CSV_feature_class_field_properties_string(object_field_features_list_str=field_object_feature_list_str)))
+                                    fc_field_details_obj.create_CSV_feature_class_field_properties_string(
+                                        object_field_features_list_str=field_object_feature_list_str)))
                             except Exception as e:
                                 # For fc field details that don't process this records their presence so not undocumented.
-                                myutil.print_and_log(message="Did not write FC field details to file: {}{}".format(fc_field_details_obj.row_id, e),
-                                                     log_level=myutil.WARNING_LEVEL)
+                                myutil.print_and_log(message="Did not write FC field details to file: {}{}".format(
+                                    fc_field_details_obj.row_id, e),
+                                    log_level=myutil.WARNING_LEVEL)
                         if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
                             myutil.upsert_to_socrata(client=socrata_featureclass_fields_client,
                                                      dataset_identifier=fieldlevel_app_id,
-                                                     zipper=fc_field_details_obj.create_zipper(headers_list=FeatureClassObjects_Class.FeatureClassFieldDetails.FIELD_HEADERS_LIST.value,
-                                                                                               data_list=field_object_feature_list_str))
+                                                     zipper=fc_field_details_obj.create_zipper(
+                                                         headers_list=FeatureClassObjects_Class.FeatureClassFieldDetails.FIELD_HEADERS_LIST.value,
+                                                         data_list=field_object_feature_list_str))
         except Exception as e:
             myutil.print_and_log(
                 message="Problem iterating through FC's within FD: {}. {}".format(fd, e),log_level=myutil.WARNING_LEVEL)

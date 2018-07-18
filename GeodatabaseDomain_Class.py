@@ -29,18 +29,36 @@ class GeodatabaseDomains():
         self.__row_id = myutil.generate_id_from_args(self.name, self.date)
         return
 
-    def create_domain_properties_string(self):
+    def create_object_feature_list(self):
         """
         TODO: documentation
         :return:
         """
         domain_ID = myutil.generate_id_from_args(self.environment_name, self.name)
-        record_values_list = [self.name, self.description, self.domain_type, self.data_type,
+        return [self.name, self.description, self.domain_type, self.data_type,
                               self.domain_object.codedValues.keys(), self.domain_object.codedValues.values(),
                               self.range, domain_ID, self.date, self.row_id]
+
+    def create_object_feature_list_str(self, domain_object_feature_list):
+        """
+        TODO: documentation
+        :param domain_object_feature_list:
+        :return:
+        """
+        return myutil.replace_character_in_list_of_strings(values_list=domain_object_feature_list)
+
+    def create_CSV_domain_properties_string(self, object_feature_list_str):
+        """
+        TODO: documentation
+        :return:
+        """
+        # domain_ID = myutil.generate_id_from_args(self.environment_name, self.name)
+        # record_values_list = [self.name, self.description, self.domain_type, self.data_type,
+        #                       self.domain_object.codedValues.keys(), self.domain_object.codedValues.values(),
+        #                       self.range, domain_ID, self.date, self.row_id]
         # Handle pre-existing commas in the domain information/data/etc
-        record_values_list = myutil.replace_character_in_list_of_strings(values_list=record_values_list)
-        return ",".join(record_values_list)
+        # record_values_list = myutil.replace_character_in_list_of_strings(values_list=record_values_list)
+        return ",".join(object_feature_list_str)
 
     def create_zipper(self, headers_list, data_list):
         """
