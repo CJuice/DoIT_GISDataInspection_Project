@@ -118,7 +118,7 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def create_output_results_file_handler(output_filename):
         """
-        TODO: fill this out
+        TODO: documentation
         :param output_filename:
         :return:
         """

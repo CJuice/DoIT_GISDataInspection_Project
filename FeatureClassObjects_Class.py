@@ -2,7 +2,7 @@ from collections import namedtuple
 
 class FeatureClassObject():
     """
-    #TODO
+    #TODO: documentation
     """
     # Class to hold feature class objects from the arcpy.Describe functionality
     Variable = namedtuple("Variable", "value")  # named tuple definition
@@ -25,18 +25,53 @@ class FeatureClassObject():
         self.total_null_value_count = -9999
         self.total_record_count = -9999
         self.total_value_count = -9999
+        self.object_feature_list = []
+        self.object_feature_list_str = []
 
-    def generate_feature_class_properties_string(self):
-        object_features_list = [self.fc_name, self.data_type, self.shape_type, self.total_field_count,
-                                self.total_record_count, self.total_value_count, self.total_null_value_count,
-                                self.percent_null, self.spatial_ref_name, self.fd_name, self.fc_ID,
-                                self.date_export, self.row_id]
-        string_list = list(map(str, object_features_list))
-        return ",".join(string_list)
+    @property
+    def object_feature_list(self):
+        return self.__object_feature_list
+
+    @object_feature_list.setter
+    def object_feature_list(self, value):
+        self.__object_feature_list = [self.fc_name, self.data_type, self.shape_type, self.total_field_count,
+         self.total_record_count, self.total_value_count, self.total_null_value_count,
+         self.percent_null, self.spatial_ref_name, self.fd_name, self.fc_ID,
+         self.date_export, self.row_id]
+
+    @property
+    def object_feature_list_str(self):
+        return self.__object_feature_list_str
+
+    @object_feature_list_str.setter
+    def object_feature_list_str(self, value):
+        self.__object_feature_list_str = list(map(str, self.object_feature_list))
+
+    def create_feature_class_properties_string(self):
+        """
+        #TODO: documentation
+        :return:
+        """
+        # object_features_list = [self.fc_name, self.data_type, self.shape_type, self.total_field_count,
+        #                         self.total_record_count, self.total_value_count, self.total_null_value_count,
+        #                         self.percent_null, self.spatial_ref_name, self.fd_name, self.fc_ID,
+        #                         self.date_export, self.row_id]
+        # string_list = list(map(str, self.object_feature_list))
+        # return ",".join(string_list)
+        return ",".join(self.object_feature_list_str)
+
+    def create_zipper(self, headers_list, data_list):
+        """
+        #TODO: documentation
+        :param headers_list:
+        :param data_list:
+        :return:
+        """
+        return zip(headers_list, data_list)
 
 class FeatureClassFieldDetails():
     """
-    #TODO
+    #TODO: documentation
     """
     # Class to hold the details on the feature class fields using the arpy.Describe fields info
     Variable = namedtuple("Variable", "value")  # named tuple definition
@@ -64,10 +99,32 @@ class FeatureClassFieldDetails():
         self.row_id = row_id
         self.total_null_value_count = total_null_value_count
         self.total_record_count = total_record_count
+        self.object_feature_field_list = None
+        self.object_feature_field_list_str = None
+
+    @property
+    def object_feature_field_list(self):
+        return self.__object_feature_field_list
+
+    @object_feature_field_list.setter
+    def object_feature_field_list(self, value):
+        self.__object_feature_field_list = [self.field_alias, self.field_name, self.total_null_value_count, self.total_record_count, self.percent_field_null,
+                                self.field_type, self.field_def_value, self.field_domain, self.field_is_nullable,
+                                self.field_length, self.field_max_chars_used, self.field_precision, self.field_scale,
+                                self.field_required, self.field_id, self.fc_ID, self.date_export, self.row_id]
+
+    @property
+    def object_feature_field_list_str(self):
+        return self.__object_feature_field_list_str
+
+    @object_feature_field_list_str.setter
+    def object_feature_field_list_str(self, value):
+        self.__object_feature_field_list_str = list(map(str, self.object_feature_field_list))
 
     @property
     def field_domain(self):
         return self.__field_domain
+
     @field_domain.setter
     def field_domain(self, value):
         if value is None:
@@ -80,12 +137,26 @@ class FeatureClassFieldDetails():
             self.__field_domain = value
         return
 
-    def generate_feature_class_field_properties_string(self):
-        object_features_list = [self.field_alias, self.field_name, self.total_null_value_count, self.total_record_count, self.percent_field_null,
-                                self.field_type, self.field_def_value, self.field_domain, self.field_is_nullable,
-                                self.field_length, self.field_max_chars_used, self.field_precision, self.field_scale,
-                                self.field_required, self.field_id, self.fc_ID, self.date_export, self.row_id]
-        string_list = list(map(str, object_features_list))
-        return ",".join(string_list)
+    def create_feature_class_field_properties_string(self):
+        """
+        # TODO: documentation
+        """
+        # object_features_list = [self.field_alias, self.field_name, self.total_null_value_count, self.total_record_count,
+        #                         self.percent_field_null,
+        #                         self.field_type, self.field_def_value, self.field_domain, self.field_is_nullable,
+        #                         self.field_length, self.field_max_chars_used, self.field_precision, self.field_scale,
+        #                         self.field_required, self.field_id, self.fc_ID, self.date_export, self.row_id]
+        # string_list = list(map(str, object_features_list))
+        # return ",".join(string_list)
+        return ",".join(self.object_feature_field_list_str)
+
+    def create_zipper(self, headers_list, data_list):
+        """
+        #TODO: documentation
+        :param headers_list:
+        :param data_list:
+        :return:
+        """
+        return zip(headers_list, data_list)
 
 

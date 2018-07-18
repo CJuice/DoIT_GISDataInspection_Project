@@ -8,7 +8,6 @@ Date:  05/17/2018
 Revised:  Forked from EnterpriseGDBIntentory project. Tailored to DoIT needs for GIS data inspection.
 Modifications:
 """
-# TODO Upsert results to Socrata dataset
 # TODO: To avoid false zero values in counter dictionaries may need to set initial value to database flag and add functionality to check for flag and reset to zero on first time through
 def main():
 
@@ -34,22 +33,17 @@ def main():
     FILE_NAME_FIELD_INVENTORY = CONSTANT(value="FeatureClassFIELDSInventory")
     LOG_FILE = CONSTANT(value=os.path.join(_ROOT_PATH_FOR_PROJECT.value, "EnterpriseGDBInventory_LOG.log"))
     PATH_FOR_CSV_OUTPUT = CONSTANT(value=os.path.join(_ROOT_PATH_FOR_PROJECT.value, "OUTPUT_CSVs"))
-    URL_FOR_DATASET_ACCESS = CONSTANT(value=r"https://data.maryland.gov/resource/")
+    # URL_FOR_DATASET_ACCESS = CONSTANT(value=r"https://data.maryland.gov/resource/")
     TURN_ON_WRITE_OUTPUT_TO_CSV = CONSTANT(value=True)          # OPTION
     TURN_ON_UPSERT_OUTPUT_TO_SOCRATA = CONSTANT(value=True)     # OPTION
-    # PATH_SOCRATA_CREDENTIALS_JSON = CONSTANT(value="")  #TODO
+    # PATH_SOCRATA_CREDENTIALS_JSON = CONSTANT(value="")  #TODO: get credentials ??
         # OTHER
     domain_objects_list = None
-    feature_classes_list = None
-    feature_dataset_ADMs_list = []
     feature_datasets_list = None
-    feature_dataset_names_list = []
-    feature_dataset_parts_dict = {}
-    output_file_directory = r"E:\DoIT_GISDataInspection_Project\OUTPUT_CSVs"       #TESTING
     output_file_names_tuple = (myutil.build_csv_file_name_with_date( myutil.build_today_date_string(), FILE_NAME_FC_INVENTORY.value),
                                myutil.build_csv_file_name_with_date(myutil.build_today_date_string(), FILE_NAME_FIELD_INVENTORY.value),
                                myutil.build_csv_file_name_with_date(myutil.build_today_date_string(), DOMAINS_INVENTORY_FILE_NAME.value))
-    round_count = 0
+    # round_count = 0
     SDE_file_path = r"E:\DoIT_GISDataInspection_Project\SDE_CONNECTION_FILE\Production as sde on gis-ags-imap01p.mdgov.maryland.gov.sde"    #TESTING
 
     # Need credentials from config file
@@ -83,13 +77,15 @@ def main():
     import arcpy  # delayed arcpy import for performance
 
     if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
-        myutil.print_and_log(message="Writing to csv (TURN_ON_WRITE_OUTPUT_TO_CSV.value = True)", log_level=myutil.INFO_LEVEL)
+        myutil.print_and_log(message="Writing to csv (TURN_ON_WRITE_OUTPUT_TO_CSV.value = True)",
+                             log_level=myutil.INFO_LEVEL)
     if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
-        myutil.print_and_log(message="Upserting to Socrata (TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value = True)", log_level=myutil.INFO_LEVEL)
+        myutil.print_and_log(message="Upserting to Socrata (TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value = True)",
+                             log_level=myutil.INFO_LEVEL)
 
 
     # OUTPUT FILES: Create the new output files, for the feature class inventory, with headers. Streamline and loop.
-    output_feature_class_file, output_fields_file, output_domains_file = [os.path.join(output_file_directory, item) for
+    output_feature_class_file, output_fields_file, output_domains_file = [os.path.join(PATH_FOR_CSV_OUTPUT.value, item) for
                                                                           item in output_file_names_tuple]
 
         # need pairing of path and headers
@@ -116,46 +112,47 @@ def main():
     else:
         myutil.print_and_log(message="Accessing {}\n".format(arcpy.env.workspace), log_level=myutil.INFO_LEVEL)
 
+    # Domains are processed first as they are at the highest level and apply to the entire geodatabase. The next level is to inventory all feature
+    # datasets and step into each feature dataset to inventory the feature classes within. After the feature classes
+    # have been processed at the dataset level each feature class is analyzed at the field level.
+
     # DOMAINS: make a list of domains for the geodatabase workspace environment.
-    sde_environment_filename = os.path.basename(SDE_file_path)
     if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
         fhand_domains_file_handler = myutil.create_output_results_file_handler(output_filename=output_domains_file)
+    if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
+        socrata_domains_client = myutil.create_socrata_client(username=socrata_username,
+                                                              password=socrata_password,
+                                                              app_token=domainlevel_app_token,
+                                                              maryland_domain=socrata_maryland_domain)
     try:
         domain_objects_list = run_ESRI_GP_tool(arcpy.da.ListDomains)
     except Exception as e:
         myutil.print_and_log(message="arcpy.da.ListDomains() failed. {}".format(e),log_level=myutil.ERROR_LEVEL)
         exit()
     else:
+        sde_environment_filename = os.path.basename(SDE_file_path)
         for domain_object in domain_objects_list:
             gdb_domain_obj = GeodatabaseDomain_Class.GeodatabaseDomains(environment_name=sde_environment_filename,
                                                                         domain_object=domain_object,
                                                                         date=myutil.build_today_date_string())
             if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
                 try:
-                    fhand_domains_file_handler.write("{}\n".format(gdb_domain_obj.generate_domain_properties_string()))
+                    fhand_domains_file_handler.write("{}\n".format(gdb_domain_obj.create_domain_properties_string()))
                 except Exception as e:
                     myutil.print_and_log(message="Did not write domains properties to file: {}. {}".format(domain_object.name, e),
                         log_level=myutil.WARNING_LEVEL)
             if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
-                socrata_domains_client = myutil.create_socrata_client(username=socrata_username,
-                                                                      password=socrata_password,
-                                                                      app_token=domainlevel_app_token,
-                                                                      maryland_domain=socrata_maryland_domain)
-                socrata_featureclass_client = myutil.create_socrata_client(username=socrata_username,
-                                                                           password=socrata_password,
-                                                                           app_token=featureclasslevel_app_token,
-                                                                           maryland_domain=socrata_maryland_domain)
-                socrata_featureclass_fields_client = myutil.create_socrata_client(username=socrata_username,
-                                                                                  password=socrata_password,
-                                                                                  app_token=fieldlevel_app_token,
-                                                                                  maryland_domain=socrata_maryland_domain)
-
+                myutil.upsert_to_socrata(client=socrata_domains_client,
+                                         dataset_identifier=domainlevel_app_id,
+                                         zipper=gdb_domain_obj.create_zipper(headers_list=GeodatabaseDomain_Class.GeodatabaseDomains.DOMAIN_HEADERS_LIST.value,
+                                                                             data_list=gdb_domain_obj.object_feature_list_str))
     finally:
-        if TURN_ON_WRITE_OUTPUT_TO_CSV:
+        if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
             fhand_domains_file_handler.close()
+        if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
+            socrata_domains_client.close()
 
     # FEATURES: make a list of FD's present.
-    feature_datasets_list = None
     try:
         feature_datasets_list = run_ESRI_GP_tool(arcpy.ListDatasets)
     except Exception as e:
@@ -187,10 +184,19 @@ def main():
                                  log_level=myutil.WARNING_LEVEL)
             # TODO: What happens if the list feature classes fails. Do I account for that?
 
-        # Open the CSV files in preparation for writing data on all feature classes in a feature dataset
         if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
             fhand_featureclass_file_handler = myutil.create_output_results_file_handler(output_filename=output_feature_class_file)
             fhand_fields_file_handler = myutil.create_output_results_file_handler(output_filename=output_fields_file)
+
+        if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
+            socrata_featureclass_client = myutil.create_socrata_client(username=socrata_username,
+                                                                       password=socrata_password,
+                                                                       app_token=featureclasslevel_app_token,
+                                                                       maryland_domain=socrata_maryland_domain)
+            socrata_featureclass_fields_client = myutil.create_socrata_client(username=socrata_username,
+                                                                              password=socrata_password,
+                                                                              app_token=fieldlevel_app_token,
+                                                                              maryland_domain=socrata_maryland_domain)
 
         # Feature Classes Inspection
         print("\tFC List: {}".format(feature_classes_list))
@@ -230,7 +236,7 @@ def main():
                 except Exception as e:
                     if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
                         fhand_featureclass_file_handler.write(
-                            "{}\n".format(fc_obj.generate_feature_class_properties_string()))
+                            "{}\n".format(fc_obj.create_feature_class_properties_string()))
                     myutil.print_and_log(
                         message="{}. {}".format(
                             "Error generating Describe Object. Basic FC object record written. Fields object skipped.",
@@ -287,14 +293,15 @@ def main():
                     # Before launching into field level analysis, write the feature class data to file.
                     if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
                         try:
-                            fhand_featureclass_file_handler.write("{}\n".format(fc_obj.generate_feature_class_properties_string()))
+                            fhand_featureclass_file_handler.write("{}\n".format(fc_obj.create_feature_class_properties_string()))
                         except Exception as e:
                             myutil.print_and_log(message="Did not write FC properties to file: {}. {}".format(fc, e),
                                                  log_level=myutil.WARNING_LEVEL)
                     if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
-                        #TODO: upsert to socrata functionality
-
-                        pass
+                        myutil.upsert_to_socrata(client=socrata_featureclass_client,
+                                                 dataset_identifier=featureclasslevel_app_id,
+                                                 zipper=fc_obj.create_zipper(headers_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
+                                                                             data_list=fc_obj.object_feature_list_str))
 
                     # FC's Fields Metadata Inspection
                     for field_object in fc_field_objects_list:
@@ -317,19 +324,20 @@ def main():
                             fc_field_details_obj.field_max_chars_used = string_fields_character_tracker_dict[fc_field_details_obj.field_name]
 
                         # Write the field details object to file
-                        # TODO: Add option tests, and upsert to socrata functionality
                         if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
                             try:
                                 # print(fc_field_details_obj.generate_feature_class_field_properties_string())
                                 fhand_fields_file_handler.write("{}\n".format(
-                                    fc_field_details_obj.generate_feature_class_field_properties_string()))
+                                    fc_field_details_obj.create_feature_class_field_properties_string()))
                             except Exception as e:
                                 # For fc field details that don't process this records their presence so not undocumented.
                                 myutil.print_and_log(message="Did not write FC field details to file: {}{}".format(fc_field_details_obj.row_id, e),
                                                      log_level=myutil.WARNING_LEVEL)
                         if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
-                            # TODO: upsert to socrata functionality
-                            pass
+                            myutil.upsert_to_socrata(client=socrata_featureclass_fields_client,
+                                                     dataset_identifier=fieldlevel_app_id,
+                                                     zipper=fc_field_details_obj.create_zipper(headers_list=FeatureClassObjects_Class.FeatureClassFieldDetails.FIELD_HEADERS_LIST.value,
+                                                                                               data_list=fc_field_details_obj.object_feature_field_list_str))
         except Exception as e:
             myutil.print_and_log(
                 message="Problem iterating through FC's within FD: {}. {}".format(fd, e),log_level=myutil.WARNING_LEVEL)
@@ -337,6 +345,9 @@ def main():
             if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
                 fhand_featureclass_file_handler.close()
                 fhand_fields_file_handler.close()
+            if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
+                socrata_featureclass_client.close()
+                socrata_featureclass_fields_client.close()
 
     myutil.print_and_log(
         message=" {} Script Completed".format(myutil.get_date_time_for_logging_and_printing()),
