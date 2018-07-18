@@ -25,7 +25,8 @@ def main():
     # VARIABLES
     CONSTANT = namedtuple("CONSTANT", "value") # named tuple definition
         # CONSTANTS
-    _ROOT_PATH_FOR_PROJECT = CONSTANT(value=r"E:\DoIT_GISDataInspection_Project")
+    _ROOT_PATH_FOR_PROJECT = CONSTANT(value=os.path.dirname(__file__))
+    # _ROOT_PATH_FOR_PROJECT = CONSTANT(value=r"E:\DoIT_GISDataInspection_Project")
     CREDENTIALS_PATH = CONSTANT(r"Docs\credentials.cfg")
     DATABASE_FLAG_NUMERIC = CONSTANT(value=-9999)
     DOMAINS_INVENTORY_FILE_NAME = CONSTANT(value="GeodatabaseDomainsInventory")
@@ -146,16 +147,15 @@ def main():
                     myutil.print_and_log(message="Did not write domains properties to file: {}. {}".format(domain_object.name, e),
                         log_level=myutil.WARNING_LEVEL)
             if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
-
                 print(myutil.make_dict_zipper(
                                              first_list=GeodatabaseDomain_Class.GeodatabaseDomains.DOMAIN_HEADERS_LIST.value,
                                              second_list=domain_object_feature_list_str))
-                # myutil.upsert_to_socrata(client=socrata_domains_client,
-                #                          dataset_identifier=domainlevel_app_id,
-                #                          zipper=myutil.make_dict_zipper(
-                #                              first_list=GeodatabaseDomain_Class.GeodatabaseDomains.DOMAIN_HEADERS_LIST.value,
-                #                              second_list=domain_object_feature_list_str)
-                #                          )
+                myutil.upsert_to_socrata(client=socrata_domains_client,
+                                         dataset_identifier=domainlevel_app_id,
+                                         zipper=myutil.make_dict_zipper(
+                                             first_list=GeodatabaseDomain_Class.GeodatabaseDomains.DOMAIN_HEADERS_LIST.value,
+                                             second_list=domain_object_feature_list_str)
+                                         )
                 myutil.print_and_log("Upserted: {}".format(gdb_domain_obj.name), myutil.INFO_LEVEL)
     finally:
         if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
@@ -218,8 +218,8 @@ def main():
 
                 #__________________________________
                 # FEATURE CLASS ISOLATION - TESTING
-                if feature_class_name != "PLAN_CountyLandUseLandCover2010_MDP":
-                    continue
+                # if feature_class_name not in ["PLAN_CountyLandUseLandCover2010_MDP", "PLAN_LandUseLandCover2010_MDP"]:
+                #     continue
                 #__________________________________
 
 
@@ -335,17 +335,18 @@ def main():
                             myutil.print_and_log(message="Did not write FC properties to file: {}. {}".format(fc, e),
                                                  log_level=myutil.WARNING_LEVEL)
                     if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
-                        print(myutil.make_dict_zipper(
-                            first_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
-                            second_list=fc_object_features_list_str))
+                        # print(myutil.make_dict_zipper(
+                        #     first_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
+                        #     second_list=fc_object_features_list_str))
                         myutil.upsert_to_socrata(client=socrata_featureclass_client,
                                                  dataset_identifier=featureclasslevel_app_id,
                                                  zipper=myutil.make_dict_zipper(first_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
                                                                              second_list=fc_object_features_list_str))
-                        myutil.print_and_log("Upserted: {}".format(fc_obj.fc_name), myutil.INFO_LEVEL)
+                        myutil.print_and_log("\tUpserted FC: {}".format(fc_obj.fc_name), myutil.INFO_LEVEL)
 
 
                     # FC's Fields Metadata Inspection
+                    myutil.print_and_log("\t\tProcessing Fields - FC: {}".format(fc_obj.fc_name), myutil.INFO_LEVEL)
                     for field_object in fc_field_objects_list:
                         field_id = myutil.generate_id_from_args(fc_id, field_object.name)
                         field_row_id = myutil.generate_id_from_args(field_id, myutil.build_today_date_string())
@@ -380,9 +381,9 @@ def main():
                                     fc_field_details_obj.row_id, e),
                                     log_level=myutil.WARNING_LEVEL)
                         if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
-                            print(myutil.make_dict_zipper(
-                                first_list=FeatureClassObjects_Class.FeatureClassFieldDetails.FIELD_HEADERS_LIST.value,
-                                second_list=field_object_feature_list_str))
+                            # print(myutil.make_dict_zipper(
+                            #     first_list=FeatureClassObjects_Class.FeatureClassFieldDetails.FIELD_HEADERS_LIST.value,
+                            #     second_list=field_object_feature_list_str))
                             myutil.upsert_to_socrata(client=socrata_featureclass_fields_client,
                                                      dataset_identifier=fieldlevel_app_id,
                                                      zipper=myutil.make_dict_zipper(
