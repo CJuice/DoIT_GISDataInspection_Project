@@ -116,6 +116,38 @@ class UtilityClassFunctionality(object):
             return False
 
     @staticmethod
+    def create_output_results_file_handler(output_filename):
+        """
+        TODO: fill this out
+        :param output_filename:
+        :return:
+        """
+        try:
+            fhand = open(output_filename, "a")
+        except Exception as e:
+            UtilityClassFunctionality.print_and_log(message="File did not open. {}. {}".format(output_filename, e),
+                                 log_level=UtilityClassFunctionality.ERROR_LEVEL)
+            exit()
+        else:
+            return fhand
+
+    @staticmethod
+    def create_socrata_client(username, password, app_token, maryland_domain):
+        """
+        Create and return a connection client for socrata.
+
+        :param username: socrata account username for dataset access
+        :param password: socrata account password for dataset access
+        :param app_token: token created in socrata for api access
+        :param maryland_domain: data.maryland.gov at time of creation
+        :return: Socrata connection client
+        """
+        #NOTE: I couldn't pip sodapy to esri python, so i copied folders from python 3.7 installation and
+        # put in C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\Lib\site-packages
+        from sodapy import Socrata
+        return Socrata(domain=maryland_domain, app_token=app_token, username=username, password=password)
+
+    @staticmethod
     def get_date_time_for_logging_and_printing():
         """
         Generate a pre-formatted date and time string for logging and printing purposes.
@@ -188,7 +220,7 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def prevent_SQL_error(field_names_list, field_objects_list):
         """
-        TODO
+        TODO: documentation
         :param field_names_list:
         :param field_objects_list:
         :return:
@@ -241,3 +273,17 @@ class UtilityClassFunctionality(object):
         for i in range(len(values_list)):
             values_list[i] = (str(values_list[i])).replace(character, replacement)
         return values_list
+
+    @staticmethod
+    def upsert_to_socrata(client, dataset_identifier, zipper):
+        """
+        Upsert data to Socrata dataset.
+
+        :param client: Socrata connection client
+        :param dataset_identifier: Unique Socrata dataset identifier. Not the data page identifier but the primary page id.
+        :param zipper: dictionary of zipped results (headers and data values)
+        :return: None
+        """
+        client.upsert(dataset_identifier=dataset_identifier, payload=zipper, content_type='json')
+        return
+
