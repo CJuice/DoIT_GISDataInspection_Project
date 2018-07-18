@@ -237,8 +237,10 @@ def main():
                 except Exception as e:
                     # If the desribe object is unavailable, write the defaults and move on as nothing more can be done
                     if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
+                        fc_object_features_list = fc_obj.create_object_feature_list()
                         fhand_featureclass_file_handler.write(
-                            "{}\n".format(fc_obj.create_CSV_feature_class_properties_string()))
+                            "{}\n".format(fc_obj.create_CSV_feature_class_properties_string(
+                                object_features_list_str=fc_object_features_list)))
                     if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
                         myutil.upsert_to_socrata(client=socrata_featureclass_client,
                                                  dataset_identifier=featureclasslevel_app_id,
@@ -299,11 +301,16 @@ def main():
                     fc_obj.percent_null = fc_percent_null
 
                     # Before launching into field level analysis, write the feature class data to file.
+                    fc_object_features_list = fc_obj.create_object_feature_list()
+                    fc_object_features_list_str = fc_obj.create_object_feature_list_str(
+                        object_features_list=fc_object_features_list)
                     if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
                         try:
-                            print("TEST FC: {}".format(fc_obj.create_CSV_feature_class_properties_string()))
+                            print("TEST FC: {}".format(fc_obj.create_CSV_feature_class_properties_string(
+                                object_features_list_str=fc_object_features_list_str)))
                             # print(fc_obj.object_feature_list_str)
-                            fhand_featureclass_file_handler.write("{}\n".format(fc_obj.create_CSV_feature_class_properties_string()))
+                            fhand_featureclass_file_handler.write("{}\n".format(fc_obj.create_CSV_feature_class_properties_string(
+                                object_features_list_str=fc_object_features_list_str)))
                         except Exception as e:
                             myutil.print_and_log(message="Did not write FC properties to file: {}. {}".format(fc, e),
                                                  log_level=myutil.WARNING_LEVEL)
@@ -311,7 +318,7 @@ def main():
                         myutil.upsert_to_socrata(client=socrata_featureclass_client,
                                                  dataset_identifier=featureclasslevel_app_id,
                                                  zipper=fc_obj.create_zipper(headers_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
-                                                                             data_list=fc_obj.object_feature_list_str))
+                                                                             data_list=fc_object_features_list_str))
 
                     # FC's Fields Metadata Inspection
                     for field_object in fc_field_objects_list:
@@ -334,12 +341,14 @@ def main():
                             fc_field_details_obj.field_max_chars_used = string_fields_character_tracker_dict[fc_field_details_obj.field_name]
 
                         # Write the field details object to file
+                        field_object_feature_list = fc_field_details_obj.create_object_field_feature_list()
+                        field_object_feature_list_str = fc_field_details_obj.create_object_field_feature_list_str(
+                            object_field_feature_list=field_object_feature_list)
                         if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
                             try:
-                                print("TEST FIELD: {}".format(fc_field_details_obj.create_CSV_feature_class_field_properties_string()))
-                                print(fc_field_details_obj.field_max_chars_used)
+                                print("TEST FIELD: {}".format(fc_field_details_obj.create_CSV_feature_class_field_properties_string(object_field_features_list_str=field_object_feature_list_str)))
                                 fhand_fields_file_handler.write("{}\n".format(
-                                    fc_field_details_obj.create_CSV_feature_class_field_properties_string()))
+                                    fc_field_details_obj.create_CSV_feature_class_field_properties_string(object_field_features_list_str=field_object_feature_list_str)))
                             except Exception as e:
                                 # For fc field details that don't process this records their presence so not undocumented.
                                 myutil.print_and_log(message="Did not write FC field details to file: {}{}".format(fc_field_details_obj.row_id, e),
@@ -348,7 +357,7 @@ def main():
                             myutil.upsert_to_socrata(client=socrata_featureclass_fields_client,
                                                      dataset_identifier=fieldlevel_app_id,
                                                      zipper=fc_field_details_obj.create_zipper(headers_list=FeatureClassObjects_Class.FeatureClassFieldDetails.FIELD_HEADERS_LIST.value,
-                                                                                               data_list=fc_field_details_obj.object_feature_field_list_str))
+                                                                                               data_list=field_object_feature_list_str))
         except Exception as e:
             myutil.print_and_log(
                 message="Problem iterating through FC's within FD: {}. {}".format(fd, e),log_level=myutil.WARNING_LEVEL)

@@ -47,17 +47,34 @@ class FeatureClassObject():
     # def object_feature_list_str(self, value):
     #     self.__object_feature_list_str = list(map(str, self.object_feature_list))
 
-    def create_CSV_feature_class_properties_string(self):
+    def create_object_feature_list(self):
+        """
+        TODO: documentation
+        :return:
+        """
+        return [self.fc_name, self.data_type, self.shape_type, self.total_field_count,
+                                self.total_record_count, self.total_value_count, self.total_null_value_count,
+                                self.percent_null, self.spatial_ref_name, self.fd_name, self.fc_ID,
+                                self.date_export, self.row_id]
+
+    def create_object_feature_list_str(self, object_features_list):
+        """
+        TODO: documentation
+        :param object_features_list:
+        :return:
+        """
+        return list(map(str, object_features_list))
+
+    def create_CSV_feature_class_properties_string(self, object_features_list_str):
         """
         #TODO: documentation
         :return:
         """
-        object_features_list = [self.fc_name, self.data_type, self.shape_type, self.total_field_count,
-                                self.total_record_count, self.total_value_count, self.total_null_value_count,
-                                self.percent_null, self.spatial_ref_name, self.fd_name, self.fc_ID,
-                                self.date_export, self.row_id]
-        string_list = list(map(str, object_features_list))
-        return ",".join(string_list)
+        # object_features_list = [self.fc_name, self.data_type, self.shape_type, self.total_field_count,
+        #                         self.total_record_count, self.total_value_count, self.total_null_value_count,
+        #                         self.percent_null, self.spatial_ref_name, self.fd_name, self.fc_ID,
+        #                         self.date_export, self.row_id]
+        return ",".join(object_features_list_str)
         # return ",".join(self.object_feature_list_str)
 
     def create_zipper(self, headers_list, data_list):
@@ -137,17 +154,36 @@ class FeatureClassFieldDetails():
             self.__field_domain = value
         return
 
-    def create_CSV_feature_class_field_properties_string(self):
+    def create_object_field_feature_list(self):
         """
-        # TODO: documentation
+        TODO: documentation
+        :return:
         """
-        object_features_list = [self.field_alias, self.field_name, self.total_null_value_count, self.total_record_count,
+        return [self.field_alias, self.field_name, self.total_null_value_count, self.total_record_count,
                                 self.percent_field_null,
                                 self.field_type, self.field_def_value, self.field_domain, self.field_is_nullable,
                                 self.field_length, self.field_max_chars_used, self.field_precision, self.field_scale,
                                 self.field_required, self.field_id, self.fc_ID, self.date_export, self.row_id]
-        string_list = list(map(str, object_features_list))
-        return ",".join(string_list)
+
+    def create_object_field_feature_list_str(self, object_field_feature_list):
+        """
+        TODO: documentation
+        :param object_field_feature_list:
+        :return:
+        """
+        return list(map(str, object_field_feature_list))
+
+    def create_CSV_feature_class_field_properties_string(self, object_field_features_list_str):
+        """
+        # TODO: documentation
+        """
+        # object_features_list = [self.field_alias, self.field_name, self.total_null_value_count, self.total_record_count,
+        #                         self.percent_field_null,
+        #                         self.field_type, self.field_def_value, self.field_domain, self.field_is_nullable,
+        #                         self.field_length, self.field_max_chars_used, self.field_precision, self.field_scale,
+        #                         self.field_required, self.field_id, self.fc_ID, self.date_export, self.row_id]
+
+        return ",".join(object_field_features_list_str)
         # return ",".join(self.object_feature_field_list_str)
 
     def create_zipper(self, headers_list, data_list):
