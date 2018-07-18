@@ -306,9 +306,6 @@ def main():
                         object_features_list=fc_object_features_list)
                     if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
                         try:
-                            print("TEST FC: {}".format(fc_obj.create_CSV_feature_class_properties_string(
-                                object_features_list_str=fc_object_features_list_str)))
-                            # print(fc_obj.object_feature_list_str)
                             fhand_featureclass_file_handler.write("{}\n".format(fc_obj.create_CSV_feature_class_properties_string(
                                 object_features_list_str=fc_object_features_list_str)))
                         except Exception as e:
@@ -346,7 +343,6 @@ def main():
                             object_field_feature_list=field_object_feature_list)
                         if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
                             try:
-                                print("TEST FIELD: {}".format(fc_field_details_obj.create_CSV_feature_class_field_properties_string(object_field_features_list_str=field_object_feature_list_str)))
                                 fhand_fields_file_handler.write("{}\n".format(
                                     fc_field_details_obj.create_CSV_feature_class_field_properties_string(object_field_features_list_str=field_object_feature_list_str)))
                             except Exception as e:
