@@ -148,9 +148,9 @@ def main():
             if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
                 myutil.upsert_to_socrata(client=socrata_domains_client,
                                          dataset_identifier=domainlevel_app_id,
-                                         zipper=gdb_domain_obj.create_zipper(
-                                             headers_list=GeodatabaseDomain_Class.GeodatabaseDomains.DOMAIN_HEADERS_LIST.value,
-                                             data_list=domain_object_feature_list_str)
+                                         zipper=myutil.make_dict_zipper(
+                                             first_list=GeodatabaseDomain_Class.GeodatabaseDomains.DOMAIN_HEADERS_LIST.value,
+                                             second_list=domain_object_feature_list_str)
                                          )
     finally:
         if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
@@ -254,9 +254,10 @@ def main():
                             object_features_list=fc_object_features_list)
                         myutil.upsert_to_socrata(client=socrata_featureclass_client,
                                                  dataset_identifier=featureclasslevel_app_id,
-                                                 zipper=fc_obj.create_zipper(
-                                                     headers_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
-                                                     data_list=fc_object_features_list_str))
+                                                 zipper=myutil.make_dict_zipper(
+                                                     first_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
+                                                     second_list=fc_object_features_list_str)
+                                                 )
                     myutil.print_and_log(
                         message="{}. {}".format(
                             "Error generating Describe Object. Basic FC object record written. Fields object skipped.",
@@ -274,7 +275,9 @@ def main():
                     #NOTE: Due to a SQL error, needed to create prevent_SQL_error() function
                     #ERROR: "Attribute column not found [42S22:[Microsoft][ODBC Driver 13 for SQL Server][SQL Server]Invalid column name 'AREA'.]"
                     fc_field_names_list, fc_field_objects_list = myutil.prevent_SQL_error(fc_field_names_list, fc_field_objects_list)
-                    fc_field_name_to_obj_dict = dict(zip(fc_field_names_list, fc_field_objects_list))
+                    fc_field_name_to_obj_dict = myutil.make_dict_zipper(first_list=fc_field_names_list,
+                                                                        second_list=fc_field_objects_list)
+                    # fc_field_name_to_obj_dict = dict(zip(fc_field_names_list, fc_field_objects_list))
                     total_field_count = len(fc_field_objects_list)
                     fc_obj.total_field_count = total_field_count
                     total_value_count = myutil.calculate_total_number_of_values_in_dataset(
@@ -290,8 +293,8 @@ def main():
                     try:
                         with arcpy.da.SearchCursor(fc, fc_field_names_list) as feature_class_cursor:
                             for row in feature_class_cursor:
-                                row_dictionary = myutil.make_zipper(dataset_headers_list=fc_field_names_list,
-                                                                    record_list=row)
+                                row_dictionary = myutil.make_dict_zipper(first_list=fc_field_names_list,
+                                                                         second_list=row)
                                 # evaluate data and inventory the null/empty data values
                                 myutil.inspect_record_for_null_values(field_null_count_dict=fc_fields_null_value_tracker_dict,
                                                                       record_dictionary=row_dictionary)
@@ -324,8 +327,8 @@ def main():
                     if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
                         myutil.upsert_to_socrata(client=socrata_featureclass_client,
                                                  dataset_identifier=featureclasslevel_app_id,
-                                                 zipper=fc_obj.create_zipper(headers_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
-                                                                             data_list=fc_object_features_list_str))
+                                                 zipper=myutil.make_dict_zipper(first_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
+                                                                             second_list=fc_object_features_list_str))
 
                     # FC's Fields Metadata Inspection
                     for field_object in fc_field_objects_list:
@@ -364,9 +367,9 @@ def main():
                         if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
                             myutil.upsert_to_socrata(client=socrata_featureclass_fields_client,
                                                      dataset_identifier=fieldlevel_app_id,
-                                                     zipper=fc_field_details_obj.create_zipper(
-                                                         headers_list=FeatureClassObjects_Class.FeatureClassFieldDetails.FIELD_HEADERS_LIST.value,
-                                                         data_list=field_object_feature_list_str))
+                                                     zipper=myutil.make_dict_zipper(
+                                                         first_list=FeatureClassObjects_Class.FeatureClassFieldDetails.FIELD_HEADERS_LIST.value,
+                                                         second_list=field_object_feature_list_str))
         except Exception as e:
             myutil.print_and_log(
                 message="Problem iterating through FC's within FD: {}. {}".format(fd, e),log_level=myutil.WARNING_LEVEL)

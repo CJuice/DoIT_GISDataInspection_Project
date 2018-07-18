@@ -51,14 +51,6 @@ class FeatureClassObject():
         """
         return ",".join(object_features_list_str)
 
-    def create_zipper(self, headers_list, data_list):
-        """
-        #TODO: documentation
-        :param headers_list:
-        :param data_list:
-        :return:
-        """
-        return zip(headers_list, data_list)
 
 class FeatureClassFieldDetails():
     """
@@ -131,14 +123,3 @@ class FeatureClassFieldDetails():
         # TODO: documentation
         """
         return ",".join(object_field_features_list_str)
-
-    def create_zipper(self, headers_list, data_list):
-        """
-        #TODO: documentation
-        :param headers_list:
-        :param data_list:
-        :return:
-        """
-        return zip(headers_list, data_list)
-
-

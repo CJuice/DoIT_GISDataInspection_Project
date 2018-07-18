@@ -147,6 +147,16 @@ class UtilityClassFunctionality(object):
         from sodapy import Socrata
         return Socrata(domain=maryland_domain, app_token=app_token, username=username, password=password)
 
+    # @staticmethod
+    # def create_dict_zipper(list_1, list_2):
+    #     """
+    #     #TODO: documentation
+    #     :param list_1:
+    #     :param list_2:
+    #     :return:
+    #     """
+    #     return zip(list_1, list_2)
+
     @staticmethod
     def get_date_time_for_logging_and_printing():
         """
@@ -207,15 +217,15 @@ class UtilityClassFunctionality(object):
         return
 
     @staticmethod
-    def make_zipper(dataset_headers_list, record_list):
+    def make_dict_zipper(first_list, second_list):
         """
-        Zip headers and data values and return a dictionary
+        Zip headers and data values, typically, and return a dictionary
 
-        :param dataset_headers_list: List of headers for dataset
-        :param record_list: List of values in the record
+        :param first_list: List of headers for dataset, often
+        :param second_list: List of values in the record, often
         :return: dictionary of zip results
         """
-        return dict(zip(dataset_headers_list, record_list))
+        return dict(zip(first_list, second_list))
 
     @staticmethod
     def prevent_SQL_error(field_names_list, field_objects_list):

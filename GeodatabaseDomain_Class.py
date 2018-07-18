@@ -59,12 +59,3 @@ class GeodatabaseDomains():
         # Handle pre-existing commas in the domain information/data/etc
         # record_values_list = myutil.replace_character_in_list_of_strings(values_list=record_values_list)
         return ",".join(object_feature_list_str)
-
-    def create_zipper(self, headers_list, data_list):
-        """
-        #TODO: documentation
-        :param headers_list:
-        :param data_list:
-        :return:
-        """
-        return zip(headers_list, data_list)
