@@ -23,8 +23,7 @@ There are four python files necessary for the process to run. These are this fil
  for two objects. These objects are a Feature Class and a Feature Class Field. These items were grouped into one file
  since a feature class and its fields are connected. Domains apply to the entire geodatabase so they were viewed to be
  separate.
-
-COMPATBILITY: Revised on 20180118 for Python 3.6 (ESRI ArcPro python version)
+COMPATIBILITY: Revised on 20180118 for Python 3.6 (ESRI ArcPro python version)
 REVISED:  Forked from CJuice's EnterpriseGDBIntentory project, originally designed for another employer environment.
  It has been tailored to Maryland DoIT needs for GIS data inspection.
 MODIFICATIONS: 20180719, Completed functionality for upserting to Socrata. Revised default timeout for Socrata client
@@ -32,7 +31,6 @@ to 30 seconds, from 10 seconds, to address periodic timeout failures.
 AUTHOR:  CJuice
 DATE:  05/17/2018 fork origin
 """
-# TODO: To avoid false zero values in counter dictionaries may need to set initial value to database flag and add functionality to check for flag and reset to zero on first time through
 def main():
 
     # IMPORTS
@@ -321,7 +319,10 @@ def main():
                         number_of_fields_in_dataset=total_field_count,
                         database_flag=DATABASE_FLAG_NUMERIC.value)
                     fc_obj.total_value_count = total_value_count
-                    fc_fields_null_value_tracker_dict = {field_obj.name : 0 for field_obj in fc_field_objects_list}
+
+                    # Initialize to -9999. Change to zero when field is encountered in null count process. Avoid false zero
+                    fc_fields_null_value_tracker_dict = {field_obj.name : DATABASE_FLAG_NUMERIC.value
+                                                         for field_obj in fc_field_objects_list}
                     max_chars_used = DATABASE_FLAG_NUMERIC.value
                     string_fields_character_tracker_dict = {field_obj.name : max_chars_used for field_obj in fc_field_objects_list if field_obj.type.lower() == "string"}
 
@@ -331,9 +332,11 @@ def main():
                             for row in feature_class_cursor:
                                 row_dictionary = myutil.make_dict_zipper(first_list=fc_field_names_list,
                                                                          second_list=row)
-                                # evaluate data and inventory the null/empty data values
+
+                                # Evaluate data and inventory the null/empty data values
                                 myutil.inspect_record_for_null_values(field_null_count_dict=fc_fields_null_value_tracker_dict,
-                                                                      record_dictionary=row_dictionary)
+                                                                      record_dictionary=row_dictionary,
+                                                                      database_flag=DATABASE_FLAG_NUMERIC.value)
                                 myutil.inspect_string_fields_for_char_usage(field_char_count_dict=string_fields_character_tracker_dict,
                                                                             record_dictionary=row_dictionary,
                                                                             field_name_to_field_object_dictionary=fc_field_name_to_obj_dict)

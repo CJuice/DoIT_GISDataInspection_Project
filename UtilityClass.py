@@ -178,15 +178,20 @@ class UtilityClassFunctionality(object):
         return sep.join(arg_stringified_list)
 
     @staticmethod
-    def inspect_record_for_null_values(field_null_count_dict, record_dictionary):
+    def inspect_record_for_null_values(field_null_count_dict, record_dictionary, database_flag):
         """
         Inspect the record for the number of null/empty values and increment the dictionary value but return nothing.
 
+        To avoid false zero values in counter dictionaries the value is initially set to database flag. This function
+         checks for database flag value and resets to zero on first time through.
         :param field_null_count_dict: dictionary that counts the nulls for each field in the dataset
         :param record_dictionary: the data record to be evaluated
+        :param database_flag: value set in dictionary initialization that is non-zero to avoid false zero in output.
         :return: nothing
         """
         for field_name, value in record_dictionary.items():
+            if field_null_count_dict[field_name] == database_flag:
+                field_null_count_dict[field_name] = 0
             if value is None:
                 field_null_count_dict[field_name] += 1
             elif len(str(value).strip()) == 0:
