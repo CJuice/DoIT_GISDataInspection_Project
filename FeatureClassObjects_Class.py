@@ -2,9 +2,15 @@ from collections import namedtuple
 
 class FeatureClassObject():
     """
-    #TODO: documentation
+    Create an object for ESRI Feature Class objects generated from arcpy.Describe functionality plus custom values,
+    and make available in csv string form for socrata upsert.
+
+    The instance variables are all items to be upserted to Socrata for the Domains dataset. The row_id is generated
+    from other attributes and values and serves as the unique ID. All values are not available intitially so default
+    values are established on instantiation. Those objects that fail to be calculated in main script thereby have
+    values that can be written to output rather than failing due to non existence. The value of -9999 is a database
+    flag value. Error value self explanatory.
     """
-    # Class to hold feature class objects from the arcpy.Describe functionality
     Variable = namedtuple("Variable", "value")
     FC_HEADERS_LIST = Variable(value=("Name", "Data Type", "Shape Type", "Total Column Count",
                                              "Total Record Count", "Total Value Count", "Total Null Value Count",
@@ -12,10 +18,10 @@ class FeatureClassObject():
                                              "DATE", "ROW_ID"))
 
     def __init__(self, fc_ID, feature_dataset_name, feature_class_name, date_export, row_id):
-        self.data_type = "ERROR"
         self.date_export = date_export
-        self.fc_name = feature_class_name
+        self.data_type = "ERROR"
         self.fc_ID = fc_ID
+        self.fc_name = feature_class_name
         self.fd_name = feature_dataset_name
         self.percent_null = -9999
         self.row_id = row_id
@@ -26,10 +32,18 @@ class FeatureClassObject():
         self.total_record_count = -9999
         self.total_value_count = -9999
 
+    def create_CSV_feature_class_properties_string(self, object_features_list_str):
+        """
+        Join with commas all values in the list of object attributes of interest and return csv string.
+        :param object_features_list_str: list of string values
+        :return: string of values separated by commas
+        """
+        return ",".join(object_features_list_str)
+
     def create_object_feature_list(self):
         """
-        TODO: documentation
-        :return:
+        Create a list of attributes from instance of class, unformatted to string, and return list
+        :return: list of attributes, not formatted to string
         """
         return [self.fc_name, self.data_type, self.shape_type, self.total_field_count,
                                 self.total_record_count, self.total_value_count, self.total_null_value_count,
@@ -38,25 +52,23 @@ class FeatureClassObject():
 
     def create_object_feature_list_str(self, object_features_list):
         """
-        TODO: documentation
-        :param object_features_list:
-        :return:
+        Convert objects in list to string if not already of that type and return the list.
+
+        :param object_features_list: list of attributes from instance
+        :return: list of string values
         """
         return list(map(str, object_features_list))
 
-    def create_CSV_feature_class_properties_string(self, object_features_list_str):
-        """
-        #TODO: documentation
-        :return:
-        """
-        return ",".join(object_features_list_str)
 
 
 class FeatureClassFieldDetails():
     """
-    #TODO: documentation
+    Create an object for ESRI Feature Class Field objects generated from arcpy.Describe fields functionality
+    plus custom values, and make available in csv string form for socrata upsert.
+
+    The instance variables are all items to be upserted to Socrata for the Domains dataset. The row_id is generated
+    from other attributes and values and serves as the unique ID. The value of -9999 is a database flag value.
     """
-    # Class to hold the details on the feature class fields using the arpy.Describe fields info
     Variable = namedtuple("Variable", "value")
     FIELD_HEADERS_LIST = Variable(value=("Alias", "Name", "Total Null Value Count", "Total Value Count",
                                          "Percent Null", "Type", "Default Value", "Domain", "Is Nullable",
@@ -102,13 +114,16 @@ class FeatureClassFieldDetails():
 
     def create_CSV_feature_class_field_properties_string(self, object_field_features_list_str):
         """
-        # TODO: documentation
+        Join with commas all values in the list of object attributes of interest and return csv string.
+        :param object_field_features_list_str: list of string values
+        :return: string of values separated by commas
         """
         return ",".join(object_field_features_list_str)
 
     def create_object_field_feature_list(self):
         """
-        TODO: documentation
+        Create a list of attributes from instance of class, unformatted to string, and return list
+        :return: list of attributes, not formatted to string
         :return:
         """
         return [self.field_alias, self.field_name, self.total_null_value_count, self.total_record_count,
@@ -119,8 +134,8 @@ class FeatureClassFieldDetails():
 
     def create_object_field_feature_list_str(self, object_field_feature_list):
         """
-        TODO: documentation
-        :param object_field_feature_list:
-        :return:
+        Convert objects in list to string if not already of that type and return the list.
+        :param object_field_feature_list: list of attributes from instance
+        :return: list of string values
         """
         return list(map(str, object_field_feature_list))

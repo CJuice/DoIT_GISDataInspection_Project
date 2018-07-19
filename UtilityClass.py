@@ -79,7 +79,7 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def capture_and_print_geoprocessing_errors(func):
         """
-        Wrap a function with try and except and rturn resulting value. Decorator.
+        Wrap a function with try and except and return resulting value. Decorator.
 
         :param func: The ESRI geoprocessing function object
         :return: The resulting value from the tool on successful run, or exit on fail.
@@ -109,7 +109,7 @@ class UtilityClassFunctionality(object):
         Check for path existence and return boolean.
 
         :param path: The path of interest
-        :return: No return, or exit on fail
+        :return: boolean
         """
         import os.path
         if os.path.exists(path):
@@ -120,9 +120,11 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def create_output_results_file_handler(output_filename):
         """
-        TODO: documentation
-        :param output_filename:
-        :return:
+        Create a file handler and return it.
+
+        If exception occurs, log and exit
+        :param output_filename: name of the output file
+        :return: handler for opened file
         """
         try:
             fhand = open(output_filename, "a")
@@ -138,6 +140,7 @@ class UtilityClassFunctionality(object):
         """
         Create and return a Socrata connection client.
 
+        Depends on import of sodapy and Socrata from that module
         NOTE: I couldn't pip sodapy to esri python, so i copied folders from python 3.7 installation and
          put in C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\Lib\site-packages
         NOTE: Due to occasional timeout errors, randomly encountered during visualcron runs of the process, the
@@ -148,7 +151,6 @@ class UtilityClassFunctionality(object):
         :param maryland_domain: data.maryland.gov at time of creation
         :return: Socrata connection client
         """
-
         from sodapy import Socrata
         return Socrata(domain=maryland_domain, app_token=app_token, username=username, password=password, timeout=30)
 
@@ -204,7 +206,6 @@ class UtilityClassFunctionality(object):
         :param record_dictionary: record to be evaluated, in dictionary form
         :return: nothing
         """
-
         for field_name, value in record_dictionary.items():
             field_data_type = field_name_to_field_object_dictionary[field_name].type
             if field_data_type.lower() == "string" and value is not None:
@@ -227,9 +228,12 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def prevent_SQL_error(field_names_list, field_objects_list):
         """
-        TODO: documentation
-        :param field_names_list:
-        :param field_objects_list:
+        Prevent a sql error by removing problematic fields and objects from lists.
+
+        Was getting a sql error "Attribute column not found [42S22:[Microsoft][ODBC Driver 13 for SQL Server][SQL
+        Server]Invalid column name 'AREA'.]" Needed to remove the problematic fields.
+        :param field_names_list: list of fields in feature class
+        :param field_objects_list: field objects in list from feature class
         :return:
         """
         remove_these_fields = ["shape", "area", "len", "starea()", "stlength()"]
@@ -278,11 +282,12 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def replace_character_in_list_of_strings(values_list, character=",", replacement="|"):
         """
-        TODO: documentation
-        :param values_list:
-        :param character:
-        :param replacement:
-        :return:
+        Replace a character in any item in a list of strings and return amended list of strings
+
+        :param values_list: list of string values
+        :param character: the character to be replaced
+        :param replacement: the replacement character
+        :return: list of revised string values
         """
         for i in range(len(values_list)):
             values_list[i] = (str(values_list[i])).replace(character, replacement)
@@ -293,9 +298,10 @@ class UtilityClassFunctionality(object):
         """
         Upsert data to Socrata dataset but return nothing
 
+        Python dictionary is seen as json.
         :param client: Socrata connection client
         :param dataset_identifier: Unique Socrata dataset identifier. Not the data page identifier but the primary page id.
-        :param zipper: dictionary of zipped results (headers and data values)
+        :param zipper: dictionary of zipped results (headers and data values).
         :return: None
         """
         client.upsert(dataset_identifier=dataset_identifier, payload=zipper, content_type='json')
