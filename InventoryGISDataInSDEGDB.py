@@ -1,12 +1,36 @@
 """
-Access an sde geodatabase and inventory the feature classes and inspect the data.
-Inputs:  User defined folder choice (integer)
-Outputs:
-Compatibility: Revised on 20180118 for Python 3.6 (ESRI ArcPro python version)
-Author:  CJuice
-Date:  05/17/2018
-Revised:  Forked from EnterpriseGDBIntentory project. Tailored to DoIT needs for GIS data inspection.
-Modifications:
+Access an ESRI SDE geodatabase per the SDE connection file provided by the user; Inventory the domains, the feature
+ datasets, the feature classes and inspect all data within.
+
+For Domains, inventory the name, description, domain type, data type, coded value keys, coded value values, range, and
+ create database fields for domain ID, date, and row ID.
+For Feature Classes, inventory the name, data type, shape type, total column count, total record count, total value
+ count, total null value count, percent null, spatial reference name, feature dataset name, and create database fields
+ for feature class ID, date, and row ID.
+For Feature Class Fields, inventory the alias, name, total null value count, total value count, percent null, type,
+ default value, domain, is nullable, length, max charater length found, precision, scale, required, and create
+ database fields for field ID, feature class ID, date, and row ID.
+The essential pieces for the script to run are a config file containing the credentials for accessing Socrata and the
+ datasets to which results are written. If csv files of the results are being written then the output file names must be
+ provided. A log file name must be provided as the process logs its progress and issues to a log file. An output folder
+ name must be provided for the csv output, if written.
+There are two optional boolean parameters the user can alter. They control whether the results are written to csv files
+ and if the results are upserted to Socrata.
+There are four python files necessary for the process to run. These are this file, a UtilityClass.py module, a
+ GeodatabaseDomain_Class.py module, and a FeatureClassObjects_Class.py module. This file is the main script to perform
+ the process. The Utility Class contains static methods for use anywhere within the process parts. The Geodatabase
+ Domain Class contains the structure for the domains objects. The Feature Class Objects Class contains the structure
+ for two objects. These objects are a Feature Class and a Feature Class Field. These items were grouped into one file
+ since a feature class and its fields are connected. Domains apply to the entire geodatabase so they were viewed to be
+ separate.
+
+COMPATBILITY: Revised on 20180118 for Python 3.6 (ESRI ArcPro python version)
+REVISED:  Forked from CJuice's EnterpriseGDBIntentory project, originally designed for another employer environment.
+ It has been tailored to Maryland DoIT needs for GIS data inspection.
+MODIFICATIONS: 20180719, Completed functionality for upserting to Socrata. Revised default timeout for Socrata client
+to 30 seconds, from 10 seconds, to address periodic timeout failures.
+AUTHOR:  CJuice
+DATE:  05/17/2018 fork origin
 """
 # TODO: To avoid false zero values in counter dictionaries may need to set initial value to database flag and add functionality to check for flag and reset to zero on first time through
 def main():
@@ -23,10 +47,10 @@ def main():
     import time
 
     # VARIABLES
-    CONSTANT = namedtuple("CONSTANT", "value") # named tuple definition
+    CONSTANT = namedtuple("CONSTANT", "value")
+
         # CONSTANTS
     _ROOT_PATH_FOR_PROJECT = CONSTANT(value=os.path.dirname(__file__))
-    # _ROOT_PATH_FOR_PROJECT = CONSTANT(value=r"E:\DoIT_GISDataInspection_Project")
     CREDENTIALS_PATH = CONSTANT(r"Docs\credentials.cfg")
     DATABASE_FLAG_NUMERIC = CONSTANT(value=-9999)
     DOMAINS_INVENTORY_FILE_NAME = CONSTANT(value="GeodatabaseDomainsInventory")
@@ -34,30 +58,34 @@ def main():
     FILE_NAME_FIELD_INVENTORY = CONSTANT(value="FeatureClassFIELDSInventory")
     LOG_FILE = CONSTANT(value=os.path.join(_ROOT_PATH_FOR_PROJECT.value, "EnterpriseGDBInventory_LOG.log"))
     PATH_FOR_CSV_OUTPUT = CONSTANT(value=os.path.join(_ROOT_PATH_FOR_PROJECT.value, "OUTPUT_CSVs"))
-    # URL_FOR_DATASET_ACCESS = CONSTANT(value=r"https://data.maryland.gov/resource/")
-    TURN_ON_WRITE_OUTPUT_TO_CSV = CONSTANT(value=True)          # OPTION
-    TURN_ON_UPSERT_OUTPUT_TO_SOCRATA = CONSTANT(value=True)     # OPTION
+    TURN_ON_UPSERT_OUTPUT_TO_SOCRATA = CONSTANT(value=True)                                         # OPTION
+    TURN_ON_WRITE_OUTPUT_TO_CSV = CONSTANT(value=True)                                              # OPTION
+
         # OTHER
     domain_objects_list = None
     feature_datasets_list = None
-    output_file_names_tuple = (myutil.build_csv_file_name_with_date( myutil.build_today_date_string(), FILE_NAME_FC_INVENTORY.value),
-                               myutil.build_csv_file_name_with_date(myutil.build_today_date_string(), FILE_NAME_FIELD_INVENTORY.value),
-                               myutil.build_csv_file_name_with_date(myutil.build_today_date_string(), DOMAINS_INVENTORY_FILE_NAME.value))
-    # round_count = 0
-    SDE_file_path = os.path.join(_ROOT_PATH_FOR_PROJECT.value, r"SDE_CONNECTION_FILE\Production as sde on gis-ags-imap01p.mdgov.maryland.gov.sde")    #TESTING
+    output_file_names_tuple = (myutil.build_csv_file_name_with_date( myutil.build_today_date_string(),
+                                                                     FILE_NAME_FC_INVENTORY.value),
+                               myutil.build_csv_file_name_with_date(myutil.build_today_date_string(),
+                                                                    FILE_NAME_FIELD_INVENTORY.value),
+                               myutil.build_csv_file_name_with_date(myutil.build_today_date_string(),
+                                                                    DOMAINS_INVENTORY_FILE_NAME.value))
+    SDE_file_path = os.path.join(_ROOT_PATH_FOR_PROJECT.value,
+                                 r"SDE_CONNECTION_FILE\Production as sde on gis-ags-imap01p.mdgov.maryland.gov.sde")
 
-    # Need credentials from config file
+        # Credentials: need from config file
     config = configparser.ConfigParser()
     config.read(filenames=CREDENTIALS_PATH.value)
-    socrata_username = config['DEFAULT']["username"]
-    socrata_password = config['DEFAULT']["password"]
-    socrata_maryland_domain = config['DEFAULT']["maryland_domain"]
-    featureclasslevel_app_token = config['featureclasslevel']["app_token"]
-    featureclasslevel_app_id = config['featureclasslevel']["app_id"]
-    fieldlevel_app_token = config['fieldlevel']["app_token"]
-    fieldlevel_app_id = config['fieldlevel']["app_id"]
-    domainlevel_app_token = config['domainlevel']["app_token"]
     domainlevel_app_id = config['domainlevel']["app_id"]
+    domainlevel_app_token = config['domainlevel']["app_token"]
+    featureclasslevel_app_id = config['featureclasslevel']["app_id"]
+    featureclasslevel_app_token = config['featureclasslevel']["app_token"]
+    fieldlevel_app_id = config['fieldlevel']["app_id"]
+    fieldlevel_app_token = config['fieldlevel']["app_token"]
+    socrata_maryland_domain = config['DEFAULT']["maryland_domain"]
+    socrata_password = config['DEFAULT']["password"]
+    socrata_username = config['DEFAULT']["username"]
+
 
     # LOGGING
     logging.basicConfig(filename=LOG_FILE.value, level=logging.INFO)
@@ -163,7 +191,7 @@ def main():
         if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
             socrata_domains_client.close()
 
-    # FEATURES: make a list of FD's present.
+    # FEATURE DATASETS: make a list of FD's present.
     try:
         feature_datasets_list = run_ESRI_GP_tool(arcpy.ListDatasets)
     except Exception as e:
@@ -174,7 +202,6 @@ def main():
     convention. Environment_Name.SDE.Entity_Data_Name for example Production.SDE.Transportation_Mile_Markers_etc;
     Coded is designed to this."""
     feature_datasets_list.sort()
-    # FD Inspection
     for fd in feature_datasets_list:
         myutil.print_and_log(message="Examining FD: {}".format(fd),log_level=myutil.INFO_LEVEL)
         production_fd, sde_fd_ID, feature_dataset_name = fd.split(".") # first two vars are not used
@@ -191,9 +218,9 @@ def main():
         try:
             feature_classes_list = run_ESRI_GP_tool(arcpy.ListFeatureClasses)
         except Exception as e:
-            myutil.print_and_log(message="Error creating list of FC's inside of FD: {}. {}".format(fd, e),
+            myutil.print_and_log(message="Error creating list of FC's inside FD. FD contents not processed: {}. {}".format(fd, e),
                                  log_level=myutil.WARNING_LEVEL)
-            # TODO: What happens if the list feature classes fails. Do I account for that?
+            continue
 
         if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
             fhand_featureclass_file_handler = myutil.create_output_results_file_handler(output_filename=output_feature_class_file)
@@ -264,8 +291,7 @@ def main():
                                                  dataset_identifier=featureclasslevel_app_id,
                                                  zipper=myutil.make_dict_zipper(
                                                      first_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
-                                                     second_list=fc_object_features_list_str)
-                                                 )
+                                                     second_list=fc_object_features_list_str))
                         myutil.print_and_log("Upserted Generic: {}".format(fc_obj.fc_name), myutil.INFO_LEVEL)
 
                     myutil.print_and_log(
@@ -276,18 +302,17 @@ def main():
                     continue
                 else:
                     # If successful Describe object returned, proceed with next stage of analysis
+                    fc_field_objects_list = fc_desc.fields
+                    fc_field_names_list = [field_obj.baseName for field_obj in fc_field_objects_list]
                     fc_obj.data_type = fc_desc.dataType
                     fc_obj.shape_type = fc_desc.shapeType
                     fc_obj.spatial_ref_name = fc_desc.spatialReference.name
-                    fc_field_objects_list = fc_desc.fields
-                    fc_field_names_list = [field_obj.baseName for field_obj in fc_field_objects_list]
 
                     #NOTE: Due to a SQL error, needed to create prevent_SQL_error() function
                     #ERROR: "Attribute column not found [42S22:[Microsoft][ODBC Driver 13 for SQL Server][SQL Server]Invalid column name 'AREA'.]"
                     fc_field_names_list, fc_field_objects_list = myutil.prevent_SQL_error(fc_field_names_list, fc_field_objects_list)
                     fc_field_name_to_obj_dict = myutil.make_dict_zipper(first_list=fc_field_names_list,
                                                                         second_list=fc_field_objects_list)
-                    # fc_field_name_to_obj_dict = dict(zip(fc_field_names_list, fc_field_objects_list))
                     total_field_count = len(fc_field_objects_list)
                     fc_obj.total_field_count = total_field_count
                     total_value_count = myutil.calculate_total_number_of_values_in_dataset(
@@ -335,9 +360,6 @@ def main():
                             myutil.print_and_log(message="Did not write FC properties to file: {}. {}".format(fc, e),
                                                  log_level=myutil.WARNING_LEVEL)
                     if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
-                        # print(myutil.make_dict_zipper(
-                        #     first_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
-                        #     second_list=fc_object_features_list_str))
                         myutil.upsert_to_socrata(client=socrata_featureclass_client,
                                                  dataset_identifier=featureclasslevel_app_id,
                                                  zipper=myutil.make_dict_zipper(first_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
@@ -362,7 +384,6 @@ def main():
                                                                                                   percent_null=field_percent_null,
                                                                                                   date_export=myutil.build_today_date_string(),
                                                                                                   row_id=field_row_id)
-
                         if field_object.name in string_fields_character_tracker_dict.keys():
                             fc_field_details_obj.field_max_chars_used = string_fields_character_tracker_dict[fc_field_details_obj.field_name]
 
@@ -381,9 +402,6 @@ def main():
                                     fc_field_details_obj.row_id, e),
                                     log_level=myutil.WARNING_LEVEL)
                         if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
-                            # print(myutil.make_dict_zipper(
-                            #     first_list=FeatureClassObjects_Class.FeatureClassFieldDetails.FIELD_HEADERS_LIST.value,
-                            #     second_list=field_object_feature_list_str))
                             myutil.upsert_to_socrata(client=socrata_featureclass_fields_client,
                                                      dataset_identifier=fieldlevel_app_id,
                                                      zipper=myutil.make_dict_zipper(

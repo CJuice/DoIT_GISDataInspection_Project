@@ -18,7 +18,7 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def build_csv_file_name_with_date(today_date_string, filename):
         """
-        Build a string, ending in .csv, that contains todays date and the provided file name
+        Build a string, ending in .csv, that contains todays date and the provided file name and return string
 
         :param today_date_string: Intended to be the date the file will be created
         :param filename: Name of the file
@@ -29,7 +29,7 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def build_today_date_string():
         """
-        Build a string representing todays date.
+        Build a string representing todays date and return string
 
         :return: string representing date formatted as Year Month Day. Formatted to meet Socrata accepted style
         """
@@ -39,7 +39,8 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def calculate_percent(numerator, denominator):
         """
-        Calculate the percent of all possible data values, not rows or columns
+        Calculate the percent of all possible data values, not rows or columns, and return float
+
         :param numerator: Total number of values
         :param denominator: Denominator in division to calculate percent. Total records, total data values, etc.
         :return: Percent value as a float, rounded to two decimal places
@@ -53,7 +54,7 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def calculate_total_number_of_null_values_per_dataset(null_counts_list):
         """
-        Calculate the total number of null/empty values in a list
+        Calculate the total number of null/empty values in a list and return integer sum.
 
         :param null_counts_list: List of numeric values representing null counts per column in dataset
         :return: Integer value representing total
@@ -63,7 +64,8 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def calculate_total_number_of_values_in_dataset(total_records_processed, number_of_fields_in_dataset, database_flag):
         """
-        Calculate the total number of values in a dataset from the number of records and columns/fields.
+        Calculate the total number of values in a dataset from the number of records and columns/fields and return float or database flag
+
         :param total_records_processed: Total number or records processed
         :param number_of_fields_in_dataset: Total number of columns in the dataset
         :param database_flag: flag used to identify erroneous result
@@ -77,7 +79,7 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def capture_and_print_geoprocessing_errors(func):
         """
-        Wrap a function with try and except. Decorator.
+        Wrap a function with try and except and rturn resulting value. Decorator.
 
         :param func: The ESRI geoprocessing function object
         :return: The resulting value from the tool on successful run, or exit on fail.
@@ -104,7 +106,7 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def check_path_exists(path):
         """
-        Check for path existence.
+        Check for path existence and return boolean.
 
         :param path: The path of interest
         :return: No return, or exit on fail
@@ -134,35 +136,27 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def create_socrata_client(username, password, app_token, maryland_domain):
         """
-        Create and return a connection client for socrata.
+        Create and return a Socrata connection client.
 
+        NOTE: I couldn't pip sodapy to esri python, so i copied folders from python 3.7 installation and
+         put in C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\Lib\site-packages
+        NOTE: Due to occasional timeout errors, randomly encountered during visualcron runs of the process, the
+         timeout value was upped from a default of 10 seconds to a new value of 30 seconds (20180719, CJuice)
         :param username: socrata account username for dataset access
         :param password: socrata account password for dataset access
         :param app_token: token created in socrata for api access
         :param maryland_domain: data.maryland.gov at time of creation
         :return: Socrata connection client
         """
-        #NOTE: I couldn't pip sodapy to esri python, so i copied folders from python 3.7 installation and
-        # put in C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\Lib\site-packages
-        #NOTE: Due to occasional timeout errors, randomly encountered during visualcron runs of the process, the
-        # timeout value was upped from a default of 10 seconds to a new value of 30 seconds (20180719, CJuice)
+
         from sodapy import Socrata
         return Socrata(domain=maryland_domain, app_token=app_token, username=username, password=password, timeout=30)
-
-    # @staticmethod
-    # def create_dict_zipper(list_1, list_2):
-    #     """
-    #     #TODO: documentation
-    #     :param list_1:
-    #     :param list_2:
-    #     :return:
-    #     """
-    #     return zip(list_1, list_2)
 
     @staticmethod
     def get_date_time_for_logging_and_printing():
         """
-        Generate a pre-formatted date and time string for logging and printing purposes.
+        Generate a pre-formatted date and time string for logging and printing purposes and return string.
+
         :return: String Year/Month/Day Hour:Minute:Second usable in logging, and printing statements if desired
         """
         import datetime
@@ -171,7 +165,7 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def generate_id_from_args(*args, separator="."):
         """
-        Create a string from args, separated by separator value.
+        Create a string from args, separated by separator value, and return string.
 
         :param args: Any number of arguements to be used
         :param separator: Character to separate the args
@@ -184,7 +178,7 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def inspect_record_for_null_values(field_null_count_dict, record_dictionary):
         """
-        Inspect the record for the number of null/empty values
+        Inspect the record for the number of null/empty values and increment the dictionary value but return nothing.
 
         :param field_null_count_dict: dictionary that counts the nulls for each field in the dataset
         :param record_dictionary: the data record to be evaluated
@@ -204,7 +198,8 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def inspect_string_fields_for_char_usage(field_char_count_dict, record_dictionary, field_name_to_field_object_dictionary):
         """
-        Inspect string type fields and track the max character size of all data values in each field
+        Inspect string type fields and track the max character size of all data values in each field but return nothing
+
         :param field_char_count_dict: keys are field names, values are char count
         :param record_dictionary: record to be evaluated, in dictionary form
         :return: nothing
@@ -249,7 +244,7 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def print_and_log(message, log_level):
         """
-        Print and log any provided message based on the indicated logging level.
+        Print and log any provided message based on the indicated logging level but return nothing.
 
         :param message:
         :param log_level:
@@ -269,7 +264,7 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def process_user_entry_YesNo(user_entry):
         """
-        Evaluate the users response to a raw_input for yes or no.
+        Evaluate the users response to a raw_input for yes or no and pass or return exit()
 
         Static method in UtilityClass
         :param user_entry: Users entry
@@ -282,6 +277,13 @@ class UtilityClassFunctionality(object):
 
     @staticmethod
     def replace_character_in_list_of_strings(values_list, character=",", replacement="|"):
+        """
+        TODO: documentation
+        :param values_list:
+        :param character:
+        :param replacement:
+        :return:
+        """
         for i in range(len(values_list)):
             values_list[i] = (str(values_list[i])).replace(character, replacement)
         return values_list
@@ -289,7 +291,7 @@ class UtilityClassFunctionality(object):
     @staticmethod
     def upsert_to_socrata(client, dataset_identifier, zipper):
         """
-        Upsert data to Socrata dataset.
+        Upsert data to Socrata dataset but return nothing
 
         :param client: Socrata connection client
         :param dataset_identifier: Unique Socrata dataset identifier. Not the data page identifier but the primary page id.

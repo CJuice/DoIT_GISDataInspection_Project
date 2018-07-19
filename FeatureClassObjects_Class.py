@@ -5,15 +5,11 @@ class FeatureClassObject():
     #TODO: documentation
     """
     # Class to hold feature class objects from the arcpy.Describe functionality
-    Variable = namedtuple("Variable", "value")  # named tuple definition
+    Variable = namedtuple("Variable", "value")
     FC_HEADERS_LIST = Variable(value=("Name", "Data Type", "Shape Type", "Total Column Count",
                                              "Total Record Count", "Total Value Count", "Total Null Value Count",
                                              "Percent Null", "Spatial Reference Name", "FD_NAME", "FC_ID",
                                              "DATE", "ROW_ID"))
-    # FC_HEADERS_LIST = Variable(value=("FC_NAME", "FC_DATATYPE", "FC_SHAPETYPE", "FC_TOTALCOLUMNCOUNT",
-    #                                          "FC_FEATURECOUNT", "FC_TOTALVALUECOUNT", "FC_TOTALNULLVALUECOUNT",
-    #                                          "FC_PERCENTNULL", "FC_SPATIALREFNAME", "FD_NAME", "FC_ID",
-    #                                          "DATE", "ROW_ID"))
 
     def __init__(self, fc_ID, feature_dataset_name, feature_class_name, date_export, row_id):
         self.data_type = "ERROR"
@@ -61,15 +57,12 @@ class FeatureClassFieldDetails():
     #TODO: documentation
     """
     # Class to hold the details on the feature class fields using the arpy.Describe fields info
-    Variable = namedtuple("Variable", "value")  # named tuple definition
+    Variable = namedtuple("Variable", "value")
     FIELD_HEADERS_LIST = Variable(value=("Alias", "Name", "Total Null Value Count", "Total Value Count",
                                          "Percent Null", "Type", "Default Value", "Domain", "Is Nullable",
                                          "Length", "Max Character Length Found", "Precision", "Scale", "Required",
                                          "FLD_ID", "FC_ID", "DATE", "ROW_ID"))
-    # FIELD_HEADERS_LIST = Variable(value=("FLD_ALIAS", "FLD_NAME", "FLD_TOTALNULLVALUECOUNT", "FLD_TOTALVALUECOUNT",
-    #                                      "FLD_PERCENTNULL", "FLD_TYPE", "FLD_DEF_VAL", "FLD_DOMAIN", "FLD_ISNULLABLE",
-    #                                      "FLD_LENGTH", "FLD_MAXCHARLEN", "FLD_PRECISION", "FLD_SCALE", "FLD_REQUIRED",
-    #                                      "FLD_ID", "FC_ID", "DATE", "ROW_ID"))
+
     def __init__(self, field_id, fc_id, field_object, total_record_count, total_null_value_count, percent_null,
                  date_export, row_id):
         self.date_export = date_export
@@ -107,6 +100,12 @@ class FeatureClassFieldDetails():
             self.__field_domain = value
         return
 
+    def create_CSV_feature_class_field_properties_string(self, object_field_features_list_str):
+        """
+        # TODO: documentation
+        """
+        return ",".join(object_field_features_list_str)
+
     def create_object_field_feature_list(self):
         """
         TODO: documentation
@@ -125,9 +124,3 @@ class FeatureClassFieldDetails():
         :return:
         """
         return list(map(str, object_field_feature_list))
-
-    def create_CSV_feature_class_field_properties_string(self, object_field_features_list_str):
-        """
-        # TODO: documentation
-        """
-        return ",".join(object_field_features_list_str)
