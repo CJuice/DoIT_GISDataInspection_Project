@@ -140,9 +140,10 @@ def main():
     else:
         myutil.print_and_log(message="Accessing {}\n".format(arcpy.env.workspace), log_level=myutil.INFO_LEVEL)
 
-    # Domains are processed first as they are at the highest level and apply to the entire geodatabase. The next level is to inventory all feature
-    # datasets and step into each feature dataset to inventory the feature classes within. After the feature classes
-    # have been processed at the dataset level each feature class is analyzed at the field level.
+    # Domains are processed first as they are at the highest level and apply to the entire geodatabase.
+    # The next level is to inventory all feature datasets and step into each feature dataset to inventory the
+    # feature classes within. After the feature classes have been processed at the dataset level each feature
+    # class is analyzed at the field level.
 
     # DOMAINS: make a list of domains for the geodatabase workspace environment.
     if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
