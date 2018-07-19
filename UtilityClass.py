@@ -1,6 +1,6 @@
 class UtilityClassFunctionality(object):
     """
-    Utility methods for use in scripts.
+    Utility methods for use in scripts or modules.
     """
 
     INFO_LEVEL = "info"
