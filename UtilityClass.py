@@ -144,8 +144,10 @@ class UtilityClassFunctionality(object):
         """
         #NOTE: I couldn't pip sodapy to esri python, so i copied folders from python 3.7 installation and
         # put in C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\Lib\site-packages
+        #NOTE: Due to occasional timeout errors, randomly encountered during visualcron runs of the process, the
+        # timeout value was upped from a default of 10 seconds to a new value of 30 seconds (20180719, CJuice)
         from sodapy import Socrata
-        return Socrata(domain=maryland_domain, app_token=app_token, username=username, password=password)
+        return Socrata(domain=maryland_domain, app_token=app_token, username=username, password=password, timeout=30)
 
     # @staticmethod
     # def create_dict_zipper(list_1, list_2):
