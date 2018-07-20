@@ -28,6 +28,7 @@ REVISED:  Forked from CJuice's EnterpriseGDBIntentory project, originally design
  It has been tailored to Maryland DoIT needs for GIS data inspection.
 MODIFICATIONS: 20180719, Completed functionality for upserting to Socrata. Revised default timeout for Socrata client
 to 30 seconds, from 10 seconds, to address periodic timeout failures.
+20180720, CJuice: Added try/except around Socrata upserting. Was encountering occasional timeout errors.
 AUTHOR:  CJuice
 DATE:  05/17/2018 fork origin
 """
