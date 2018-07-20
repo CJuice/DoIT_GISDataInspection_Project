@@ -174,16 +174,17 @@ def main():
                     myutil.print_and_log(message="Did not write domains properties to file: {}. {}".format(domain_object.name, e),
                         log_level=myutil.WARNING_LEVEL)
             if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
-                print(myutil.make_dict_zipper(
-                                             first_list=GeodatabaseDomain_Class.GeodatabaseDomains.DOMAIN_HEADERS_LIST.value,
-                                             second_list=domain_object_feature_list_str))
-                myutil.upsert_to_socrata(client=socrata_domains_client,
-                                         dataset_identifier=domainlevel_app_id,
-                                         zipper=myutil.make_dict_zipper(
-                                             first_list=GeodatabaseDomain_Class.GeodatabaseDomains.DOMAIN_HEADERS_LIST.value,
-                                             second_list=domain_object_feature_list_str)
-                                         )
-                myutil.print_and_log("Upserted: {}".format(gdb_domain_obj.name), myutil.INFO_LEVEL)
+                try:
+                    myutil.upsert_to_socrata(client=socrata_domains_client,
+                                             dataset_identifier=domainlevel_app_id,
+                                             zipper=myutil.make_dict_zipper(
+                                                 first_list=GeodatabaseDomain_Class.GeodatabaseDomains.DOMAIN_HEADERS_LIST.value,
+                                                 second_list=domain_object_feature_list_str))
+                    myutil.print_and_log("Upserted: {}".format(gdb_domain_obj.name), myutil.INFO_LEVEL)
+                except Exception as e:
+                    myutil.print_and_log(
+                        message="Rrror upserting to Socrata: {}. {}".format(gdb_domain_obj.name, e),
+                        log_level=myutil.WARNING_LEVEL)
     finally:
         if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
             fhand_domains_file_handler.close()
@@ -283,16 +284,17 @@ def main():
                         fc_object_features_list = fc_obj.create_object_feature_list()
                         fc_object_features_list_str = fc_obj.create_object_feature_list_str(
                             object_features_list=fc_object_features_list)
-                        print(myutil.make_dict_zipper(
-                                                     first_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
-                                                     second_list=fc_object_features_list_str))
-                        myutil.upsert_to_socrata(client=socrata_featureclass_client,
-                                                 dataset_identifier=featureclasslevel_app_id,
-                                                 zipper=myutil.make_dict_zipper(
-                                                     first_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
-                                                     second_list=fc_object_features_list_str))
-                        myutil.print_and_log("Upserted Generic: {}".format(fc_obj.fc_name), myutil.INFO_LEVEL)
-
+                        try:
+                            myutil.upsert_to_socrata(client=socrata_featureclass_client,
+                                                     dataset_identifier=featureclasslevel_app_id,
+                                                     zipper=myutil.make_dict_zipper(
+                                                         first_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
+                                                         second_list=fc_object_features_list_str))
+                            myutil.print_and_log("Upserted Generic: {}".format(fc_obj.fc_name), myutil.INFO_LEVEL)
+                        except Exception as e:
+                            myutil.print_and_log(
+                                message="Rrror upserting to Socrata: {}. {}".format(fc_obj.fc_name, e),
+                                log_level=myutil.WARNING_LEVEL)
                     myutil.print_and_log(
                         message="{}. {}".format(
                             "Error generating Describe Object. Basic FC object record written. Fields object skipped.",
@@ -364,12 +366,17 @@ def main():
                             myutil.print_and_log(message="Did not write FC properties to file: {}. {}".format(fc, e),
                                                  log_level=myutil.WARNING_LEVEL)
                     if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
-                        myutil.upsert_to_socrata(client=socrata_featureclass_client,
-                                                 dataset_identifier=featureclasslevel_app_id,
-                                                 zipper=myutil.make_dict_zipper(first_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
-                                                                             second_list=fc_object_features_list_str))
-                        myutil.print_and_log("\tUpserted FC: {}".format(fc_obj.fc_name), myutil.INFO_LEVEL)
-
+                        try:
+                            myutil.upsert_to_socrata(client=socrata_featureclass_client,
+                                                     dataset_identifier=featureclasslevel_app_id,
+                                                     zipper=myutil.make_dict_zipper(
+                                                         first_list=FeatureClassObjects_Class.FeatureClassObject.FC_HEADERS_LIST.value,
+                                                         second_list=fc_object_features_list_str))
+                            myutil.print_and_log("\tUpserted FC: {}".format(fc_obj.fc_name), myutil.INFO_LEVEL)
+                        except Exception as e:
+                            myutil.print_and_log(
+                                message="Rrror upserting to Socrata: {}. {}".format(fc_obj.fc_name, e),
+                                log_level=myutil.WARNING_LEVEL)
 
                     # FC's Fields Metadata Inspection
                     myutil.print_and_log("\t\tProcessing Fields - FC: {}".format(fc_obj.fc_name), myutil.INFO_LEVEL)
@@ -406,11 +413,16 @@ def main():
                                     fc_field_details_obj.row_id, e),
                                     log_level=myutil.WARNING_LEVEL)
                         if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
-                            myutil.upsert_to_socrata(client=socrata_featureclass_fields_client,
-                                                     dataset_identifier=fieldlevel_app_id,
-                                                     zipper=myutil.make_dict_zipper(
-                                                         first_list=FeatureClassObjects_Class.FeatureClassFieldDetails.FIELD_HEADERS_LIST.value,
-                                                         second_list=field_object_feature_list_str))
+                            try:
+                                myutil.upsert_to_socrata(client=socrata_featureclass_fields_client,
+                                                         dataset_identifier=fieldlevel_app_id,
+                                                         zipper=myutil.make_dict_zipper(
+                                                             first_list=FeatureClassObjects_Class.FeatureClassFieldDetails.FIELD_HEADERS_LIST.value,
+                                                             second_list=field_object_feature_list_str))
+                            except Exception as e:
+                                myutil.print_and_log(
+                                    message="Error upserting to Socrata: {}. {}. {}".format(fd, fc, e),
+                                    log_level=myutil.WARNING_LEVEL)
         except Exception as e:
             myutil.print_and_log(
                 message="Problem iterating through FC's within FD: {}. {}".format(fd, e),log_level=myutil.WARNING_LEVEL)
