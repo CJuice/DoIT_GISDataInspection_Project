@@ -294,7 +294,7 @@ def main():
                             myutil.print_and_log("Upserted Generic: {}".format(fc_obj.fc_name), myutil.INFO_LEVEL)
                         except Exception as e:
                             myutil.print_and_log(
-                                message="Rrror upserting to Socrata: {}. {}".format(fc_obj.fc_name, e),
+                                message="Error upserting to Socrata: {}. {}".format(fc_obj.fc_name, e),
                                 log_level=myutil.WARNING_LEVEL)
                     myutil.print_and_log(
                         message="{}. {}".format(
