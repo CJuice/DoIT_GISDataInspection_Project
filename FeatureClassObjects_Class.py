@@ -60,7 +60,6 @@ class FeatureClassObject():
         return list(map(str, object_features_list))
 
 
-
 class FeatureClassFieldDetails():
     """
     Create an object for ESRI Feature Class Field objects generated from arcpy.Describe fields functionality

@@ -31,6 +31,7 @@ to 30 seconds, from 10 seconds, to address periodic timeout failures.
 20180720, CJuice: Added try/except around Socrata upserting. Was encountering occasional timeout errors.
 AUTHOR:  CJuice
 DATE:  05/17/2018 fork origin
+Revision: 20190311, CJuice, revised data.maryland.gov to opendata.maryland.gov in config file for maryland domain
 """
 def main():
 
