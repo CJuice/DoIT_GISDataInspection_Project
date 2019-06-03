@@ -29,10 +29,14 @@ REVISED:  Forked from CJuice's EnterpriseGDBIntentory project, originally design
 MODIFICATIONS: 20180719, Completed functionality for upserting to Socrata. Revised default timeout for Socrata client
 to 30 seconds, from 10 seconds, to address periodic timeout failures.
 20180720, CJuice: Added try/except around Socrata upserting. Was encountering occasional timeout errors.
+20190311, CJuice, revised data.maryland.gov to opendata.maryland.gov in config file for maryland domain
+20190603, CJuice, added a keyword arguement value to arcpy.ListDatasets to limit search to feature type of "Feature"
+
 AUTHOR:  CJuice
 DATE:  05/17/2018 fork origin
-Revision: 20190311, CJuice, revised data.maryland.gov to opendata.maryland.gov in config file for maryland domain
 """
+
+
 def main():
 
     # IMPORTS
@@ -58,8 +62,8 @@ def main():
     FILE_NAME_FIELD_INVENTORY = CONSTANT(value="FeatureClassFIELDSInventory")
     LOG_FILE = CONSTANT(value=os.path.join(_ROOT_PATH_FOR_PROJECT.value, "EnterpriseGDBInventory_LOG.log"))
     PATH_FOR_CSV_OUTPUT = CONSTANT(value=os.path.join(_ROOT_PATH_FOR_PROJECT.value, "OUTPUT_CSVs"))
-    TURN_ON_UPSERT_OUTPUT_TO_SOCRATA = CONSTANT(value=True)                                         # OPTION
-    TURN_ON_WRITE_OUTPUT_TO_CSV = CONSTANT(value=True)                                              # OPTION
+    TURN_ON_UPSERT_OUTPUT_TO_SOCRATA = CONSTANT(value=False)                                         # OPTION
+    TURN_ON_WRITE_OUTPUT_TO_CSV = CONSTANT(value=False)                                              # OPTION
 
         # OTHER
     domain_objects_list = None
@@ -100,7 +104,6 @@ def main():
         """Pass ESRI geoprocessing function and arguments through Decorator containing error handling functionality"""
         return func(*args, **kwargs)
 
-
     # FUNCTIONALITY
     import arcpy  # delayed arcpy import for performance
 
@@ -110,7 +113,6 @@ def main():
     if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
         myutil.print_and_log(message="Upserting to Socrata (TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value = True)",
                              log_level=myutil.INFO_LEVEL)
-
 
     # OUTPUT FILES: Create the new output files, for the feature class inventory, with headers. Streamline and loop.
     output_feature_class_file, output_fields_file, output_domains_file = [os.path.join(PATH_FOR_CSV_OUTPUT.value, item) for
@@ -185,7 +187,7 @@ def main():
                     myutil.print_and_log("Upserted: {}".format(gdb_domain_obj.name), myutil.INFO_LEVEL)
                 except Exception as e:
                     myutil.print_and_log(
-                        message="Rrror upserting to Socrata: {}. {}".format(gdb_domain_obj.name, e),
+                        message="Error upserting to Socrata: {}. {}".format(gdb_domain_obj.name, e),
                         log_level=myutil.WARNING_LEVEL)
     finally:
         if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
@@ -195,7 +197,7 @@ def main():
 
     # FEATURE DATASETS: make a list of FD's present.
     try:
-        feature_datasets_list = run_ESRI_GP_tool(arcpy.ListDatasets)
+        feature_datasets_list = run_ESRI_GP_tool(arcpy.ListDatasets, feature_type="Feature")
     except Exception as e:
         myutil.print_and_log(message="arcpy.ListDatasets did not run properly. {}".format(e), log_level=myutil.ERROR_LEVEL)
         exit()
@@ -205,12 +207,13 @@ def main():
     Coded is designed to this."""
     feature_datasets_list.sort()
     for fd in feature_datasets_list:
-        myutil.print_and_log(message="Examining FD: {}".format(fd),log_level=myutil.INFO_LEVEL)
+        print()
+        myutil.print_and_log(message="Examining FD: {}".format(fd), log_level=myutil.INFO_LEVEL)
         production_fd, sde_fd_ID, feature_dataset_name = fd.split(".") # first two vars are not used
 
         # __________________________________
         # FEATURE DATASET ISOLATION - TESTING
-        # if feature_dataset_name != "PlanningCadastre_MD_LandUseLandCover":
+        # if fd == "PlanningCadastre_MD_LandUseLandCover": # not feature_dataset_name.startswith("Transportation_MD_HighwayPerformanceMonitoringSystem"): #
         #     continue
         # __________________________________
 
@@ -239,11 +242,15 @@ def main():
                                                                               maryland_domain=socrata_maryland_domain)
 
         # Feature Classes Inspection
-        print("\tFC List: {}".format(feature_classes_list))
+        print("\tFC List (len={length}): {fc_list}".format(length=len(feature_classes_list), fc_list=feature_classes_list))
         try:
             for fc in feature_classes_list:
-                myutil.print_and_log(message="\tExamining FC: {}".format(fc), log_level=myutil.INFO_LEVEL)
-                production_fc, sde_fc_ID, feature_class_name = fc.split(".") # first two vars are not used
+                fc_exists = arcpy.Exists(fc)
+                myutil.print_and_log(message="\tExamining FC: {fc}. FC Exists = {exists}".format(fc=fc, exists=fc_exists), log_level=myutil.INFO_LEVEL)
+                if not fc_exists:
+                    myutil.print_and_log(message="ERROR: ArcPy says FC DNE. {fd}  {fc}. Must skip FC.".format(fd=fd, fc=fc), log_level=myutil.ERROR_LEVEL)
+                    continue
+                production_fc, sde_fc_ID, feature_class_name = fc.split(".")  # first two vars are not used
 
                 #__________________________________
                 # FEATURE CLASS ISOLATION - TESTING
@@ -377,7 +384,7 @@ def main():
                             myutil.print_and_log("\tUpserted FC: {}".format(fc_obj.fc_name), myutil.INFO_LEVEL)
                         except Exception as e:
                             myutil.print_and_log(
-                                message="Rrror upserting to Socrata: {}. {}".format(fc_obj.fc_name, e),
+                                message="Error upserting to Socrata: {}. {}".format(fc_obj.fc_name, e),
                                 log_level=myutil.WARNING_LEVEL)
 
                     # FC's Fields Metadata Inspection
@@ -427,7 +434,7 @@ def main():
                                     log_level=myutil.WARNING_LEVEL)
         except Exception as e:
             myutil.print_and_log(
-                message="Problem iterating through FC's within FD: {}. {}".format(fd, e),log_level=myutil.WARNING_LEVEL)
+                message="Problem iterating through FC's within FD: {}. {}".format(fd, e), log_level=myutil.WARNING_LEVEL)
         finally:
             if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
                 fhand_featureclass_file_handler.close()
@@ -440,6 +447,7 @@ def main():
         message=" {} Script Completed".format(myutil.get_date_time_for_logging_and_printing()),
         log_level=myutil.INFO_LEVEL)
     return
+
 
 if __name__ == "__main__":
     main()
