@@ -195,7 +195,7 @@ def main():
         if TURN_ON_UPSERT_OUTPUT_TO_SOCRATA.value:
             socrata_domains_client.close()
 
-    # FEATURE DATASETS: make a list of FD's present.
+    # FEATURE DATASETS: make a list of FD's present. Limited to feature_type "Feature" to avoid raster catalogs etc.
     try:
         feature_datasets_list = run_ESRI_GP_tool(arcpy.ListDatasets, feature_type="Feature")
     except Exception as e:
@@ -213,7 +213,9 @@ def main():
 
         # __________________________________
         # FEATURE DATASET ISOLATION - TESTING
-        # if fd == "PlanningCadastre_MD_LandUseLandCover": # not feature_dataset_name.startswith("Transportation_MD_HighwayPerformanceMonitoringSystem"): #
+        # if fd == "PlanningCadastre_MD_LandUseLandCover":
+        # if not feature_dataset_name.startswith("Transportation_MD_HighwayPerformanceMonitoringSystem"): # PROBLEMATIC DATASETS
+        # if not feature_dataset_name.startswith('Transportation_MD_LocalTransit'):
         #     continue
         # __________________________________
 
