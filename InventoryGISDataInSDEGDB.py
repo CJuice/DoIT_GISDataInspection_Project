@@ -30,7 +30,9 @@ MODIFICATIONS: 20180719, Completed functionality for upserting to Socrata. Revis
 to 30 seconds, from 10 seconds, to address periodic timeout failures.
 20180720, CJuice: Added try/except around Socrata upserting. Was encountering occasional timeout errors.
 20190311, CJuice, revised data.maryland.gov to opendata.maryland.gov in config file for maryland domain
-20190603, CJuice, added a keyword arguement value to arcpy.ListDatasets to limit search to feature type of "Feature"
+20190603, CJuice, added a keyword argument value to arcpy.ListDatasets to limit search to feature type of "Feature".
+    Performed minor cleanup of code formatting. Discontued use of max_chars_used variable as it was just referencing
+    a constant.
 
 AUTHOR:  CJuice
 DATE:  05/17/2018 fork origin
@@ -63,7 +65,7 @@ def main():
     LOG_FILE = CONSTANT(value=os.path.join(_ROOT_PATH_FOR_PROJECT.value, "EnterpriseGDBInventory_LOG.log"))
     PATH_FOR_CSV_OUTPUT = CONSTANT(value=os.path.join(_ROOT_PATH_FOR_PROJECT.value, "OUTPUT_CSVs"))
     TURN_ON_UPSERT_OUTPUT_TO_SOCRATA = CONSTANT(value=False)                                         # OPTION
-    TURN_ON_WRITE_OUTPUT_TO_CSV = CONSTANT(value=True)                                              # OPTION
+    TURN_ON_WRITE_OUTPUT_TO_CSV = CONSTANT(value=False)                                              # OPTION
 
         # OTHER
     domain_objects_list = None
@@ -75,7 +77,7 @@ def main():
                                myutil.build_csv_file_name_with_date(myutil.build_today_date_string(),
                                                                     DOMAINS_INVENTORY_FILE_NAME.value))
     SDE_file_path = os.path.join(_ROOT_PATH_FOR_PROJECT.value,
-                                 r"SDE_CONNECTION_FILE\Production as sde on gis-ags-imap01p.mdgov.maryland.gov.sde")
+                                 r"SDE_CONNECTION_FILE\Production on gis-db-imap01p.sde")
 
         # Credentials: need from config file
     config = configparser.ConfigParser()
@@ -214,7 +216,8 @@ def main():
         # __________________________________
         # FEATURE DATASET ISOLATION - TESTING
         # if fd == "PlanningCadastre_MD_LandUseLandCover":
-        # if not feature_dataset_name.startswith("Transportation_MD_HighwayPerformanceMonitoringSystem"): # PROBLEMATIC DATASETS
+        # if not feature_dataset_name.startswith("Transportation_MD_HighwayPerformanceMonitoringSystem") and not feature_dataset_name.startswith("Transportation_MD_RoadwayAdministrativeClassification"): # PROBLEMATIC DATASETS
+        # if not feature_dataset_name.startswith("Transportation_MD_"): # PROBLEMATIC DATASETS
         # if not feature_dataset_name.startswith('Transportation_MD_LocalTransit'):
         #     continue
         # __________________________________
@@ -317,6 +320,7 @@ def main():
                         log_level=myutil.ERROR_LEVEL)
                     continue
                 else:
+
                     # If successful Describe object returned, proceed with next stage of analysis
                     fc_field_objects_list = fc_desc.fields
                     fc_field_names_list = [field_obj.baseName for field_obj in fc_field_objects_list]
@@ -340,7 +344,6 @@ def main():
                     # Initialize to -9999. Change to zero when field is encountered in null count process. Avoid false zero
                     fc_fields_null_value_tracker_dict = {field_obj.name: DATABASE_FLAG_NUMERIC.value
                                                          for field_obj in fc_field_objects_list}
-                    # max_chars_used = DATABASE_FLAG_NUMERIC.value  # NOt sure why this was created when default exists
                     string_fields_character_tracker_dict = {field_obj.name: DATABASE_FLAG_NUMERIC.value
                                                             for field_obj in fc_field_objects_list
                                                             if field_obj.type.lower() == "string"}
