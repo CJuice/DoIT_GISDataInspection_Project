@@ -26,16 +26,16 @@ There are four python files necessary for the process to run. These are this fil
 COMPATIBILITY: Revised on 20180118 for Python 3.6 (ESRI ArcPro python version)
 REVISED:  Forked from CJuice's EnterpriseGDBIntentory project, originally designed for another employer environment.
  It has been tailored to Maryland DoIT needs for GIS data inspection.
-MODIFICATIONS: 20180719, Completed functionality for upserting to Socrata. Revised default timeout for Socrata client
+AUTHOR:  CJuice
+DATE:  05/17/2018 fork origin
+REVISIONS: 20180719, Completed functionality for upserting to Socrata. Revised default timeout for Socrata client
 to 30 seconds, from 10 seconds, to address periodic timeout failures.
 20180720, CJuice: Added try/except around Socrata upserting. Was encountering occasional timeout errors.
 20190311, CJuice, revised data.maryland.gov to opendata.maryland.gov in config file for maryland domain
-20190603, CJuice, added a keyword argument value to arcpy.ListDatasets to limit search to feature type of "Feature".
-    Performed minor cleanup of code formatting. Discontued use of max_chars_used variable as it was just referencing
-    a constant.
-
-AUTHOR:  CJuice
-DATE:  05/17/2018 fork origin
+20190604, CJuice, added a keyword argument value to arcpy.ListDatasets to limit search to feature type of "Feature".
+    Performed minor cleanup of code formatting. Discontinued use of max_chars_used variable as it was just referencing
+    a constant. Switched SDE connection file to one created in ArcGIS Pro. It appears the issues with feature classes
+    "existing" to arcpy or not had to do with the connection file.
 """
 
 
@@ -64,8 +64,8 @@ def main():
     FILE_NAME_FIELD_INVENTORY = CONSTANT(value="FeatureClassFIELDSInventory")
     LOG_FILE = CONSTANT(value=os.path.join(_ROOT_PATH_FOR_PROJECT.value, "EnterpriseGDBInventory_LOG.log"))
     PATH_FOR_CSV_OUTPUT = CONSTANT(value=os.path.join(_ROOT_PATH_FOR_PROJECT.value, "OUTPUT_CSVs"))
-    TURN_ON_UPSERT_OUTPUT_TO_SOCRATA = CONSTANT(value=False)                                         # OPTION
-    TURN_ON_WRITE_OUTPUT_TO_CSV = CONSTANT(value=False)                                              # OPTION
+    TURN_ON_UPSERT_OUTPUT_TO_SOCRATA = CONSTANT(value=True)                                         # OPTION
+    TURN_ON_WRITE_OUTPUT_TO_CSV = CONSTANT(value=True)                                              # OPTION
 
         # OTHER
     domain_objects_list = None
