@@ -1,6 +1,7 @@
 from collections import namedtuple
 
-class FeatureClassObject():
+
+class FeatureClassObject:
     """
     Create an object for ESRI Feature Class objects generated from arcpy.Describe functionality plus custom values,
     and make available in csv string form for socrata upsert.
@@ -60,7 +61,7 @@ class FeatureClassObject():
         return list(map(str, object_features_list))
 
 
-class FeatureClassFieldDetails():
+class FeatureClassFieldDetails:
     """
     Create an object for ESRI Feature Class Field objects generated from arcpy.Describe fields functionality
     plus custom values, and make available in csv string form for socrata upsert.
