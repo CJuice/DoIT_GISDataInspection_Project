@@ -63,7 +63,7 @@ def main():
     LOG_FILE = CONSTANT(value=os.path.join(_ROOT_PATH_FOR_PROJECT.value, "EnterpriseGDBInventory_LOG.log"))
     PATH_FOR_CSV_OUTPUT = CONSTANT(value=os.path.join(_ROOT_PATH_FOR_PROJECT.value, "OUTPUT_CSVs"))
     TURN_ON_UPSERT_OUTPUT_TO_SOCRATA = CONSTANT(value=False)                                         # OPTION
-    TURN_ON_WRITE_OUTPUT_TO_CSV = CONSTANT(value=False)                                              # OPTION
+    TURN_ON_WRITE_OUTPUT_TO_CSV = CONSTANT(value=True)                                              # OPTION
 
         # OTHER
     domain_objects_list = None
@@ -247,11 +247,14 @@ def main():
         print("\tFC List (len={length}): {fc_list}".format(length=len(feature_classes_list), fc_list=feature_classes_list))
         try:
             for fc in feature_classes_list:
+
+                # Encountering issue with feature class that "did not exist" despite being in the list. Added check.
                 fc_exists = arcpy.Exists(fc)
                 myutil.print_and_log(message="\tExamining FC: {fc}. FC Exists = {exists}".format(fc=fc, exists=fc_exists), log_level=myutil.INFO_LEVEL)
                 if not fc_exists:
                     myutil.print_and_log(message="ERROR: ArcPy says FC DNE. {fd}  {fc}. Must skip FC.".format(fd=fd, fc=fc), log_level=myutil.ERROR_LEVEL)
                     continue
+
                 production_fc, sde_fc_ID, feature_class_name = fc.split(".")  # first two vars are not used
 
                 #__________________________________
@@ -259,7 +262,6 @@ def main():
                 # if feature_class_name not in ["PLAN_CountyLandUseLandCover2010_MDP", "PLAN_LandUseLandCover2010_MDP"]:
                 #     continue
                 #__________________________________
-
 
                 fc_id = myutil.generate_id_from_args(fd, feature_class_name)
                 fc_row_id = myutil.generate_id_from_args(fc_id, myutil.build_today_date_string())
@@ -271,6 +273,7 @@ def main():
                                                                       feature_class_name=feature_class_name,
                                                                       date_export=myutil.build_today_date_string(),
                                                                       row_id=fc_row_id)
+
                 # Get the feature count
                 try:
                     feature_count_result = run_ESRI_GP_tool(arcpy.GetCount_management, fc)
@@ -285,7 +288,8 @@ def main():
                 try:
                     fc_desc = run_ESRI_GP_tool(arcpy.Describe, fc)
                 except Exception as e:
-                    # If the desribe object is unavailable, write the defaults and move on as nothing more can be done
+
+                    # If the describe object is unavailable, write the defaults and move on as nothing more can be done
                     if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
                         fc_object_features_list = fc_obj.create_object_feature_list()
                         fhand_featureclass_file_handler.write(
@@ -334,10 +338,12 @@ def main():
                     fc_obj.total_value_count = total_value_count
 
                     # Initialize to -9999. Change to zero when field is encountered in null count process. Avoid false zero
-                    fc_fields_null_value_tracker_dict = {field_obj.name : DATABASE_FLAG_NUMERIC.value
+                    fc_fields_null_value_tracker_dict = {field_obj.name: DATABASE_FLAG_NUMERIC.value
                                                          for field_obj in fc_field_objects_list}
-                    max_chars_used = DATABASE_FLAG_NUMERIC.value
-                    string_fields_character_tracker_dict = {field_obj.name : max_chars_used for field_obj in fc_field_objects_list if field_obj.type.lower() == "string"}
+                    # max_chars_used = DATABASE_FLAG_NUMERIC.value  # NOt sure why this was created when default exists
+                    string_fields_character_tracker_dict = {field_obj.name: DATABASE_FLAG_NUMERIC.value
+                                                            for field_obj in fc_field_objects_list
+                                                            if field_obj.type.lower() == "string"}
 
                     # Access data values and analyze
                     try:
@@ -419,6 +425,7 @@ def main():
                                     fc_field_details_obj.create_CSV_feature_class_field_properties_string(
                                         object_field_features_list_str=field_object_feature_list_str)))
                             except Exception as e:
+
                                 # For fc field details that don't process this records their presence so not undocumented.
                                 myutil.print_and_log(message="Did not write FC field details to file: {}{}".format(
                                     fc_field_details_obj.row_id, e),
