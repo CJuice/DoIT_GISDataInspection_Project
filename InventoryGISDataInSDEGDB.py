@@ -230,7 +230,7 @@ def main():
         try:
             feature_classes_list = run_ESRI_GP_tool(arcpy.ListFeatureClasses)
         except Exception as e:
-            myutil.print_and_log(message="Error creating list of FC's inside FD. FD contents not processed: {}. {}".format(fd, e),
+            myutil.print_and_log(message="Error creating list of FC's inside FD. FD contents not processed: {fd}. {ex}".format(fd=fd, ex=e),
                                  log_level=myutil.WARNING_LEVEL)
             continue
 
@@ -249,7 +249,14 @@ def main():
                                                                               maryland_domain=socrata_maryland_domain)
 
         # Feature Classes Inspection
-        print("\tFC List (len={length}): {fc_list}".format(length=len(feature_classes_list), fc_list=feature_classes_list))
+        if feature_classes_list is not None:
+            print("\tFC List (len={length}): {fc_list}".format(length=len(feature_classes_list), fc_list=feature_classes_list))
+        else:
+            myutil.print_and_log(
+                message="Error: arcpy.ListFeatureClasses returned {fc_list}. Expected list. Feature Dataset not processed: {fd}".format(fc_list=feature_classes_list, fd=fd),
+                log_level=myutil.WARNING_LEVEL)
+            continue
+
         try:
             for fc in feature_classes_list:
 
