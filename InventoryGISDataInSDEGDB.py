@@ -36,6 +36,8 @@ to 30 seconds, from 10 seconds, to address periodic timeout failures.
     Performed minor cleanup of code formatting. Discontinued use of max_chars_used variable as it was just referencing
     a constant. Switched SDE connection file to one created in ArcGIS Pro. It appears the issues with feature classes
     "existing" to arcpy or not had to do with the connection file.
+20190801, CJuice, added a check for None before printing len of feature class list. Encountered case where was None.
+    Expect a list. Continues if not and feature dataset feature classes are not processed.
 """
 
 
