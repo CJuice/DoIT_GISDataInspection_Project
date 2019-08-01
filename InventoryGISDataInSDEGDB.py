@@ -231,7 +231,7 @@ def main():
             feature_classes_list = run_ESRI_GP_tool(arcpy.ListFeatureClasses)
         except Exception as e:
             myutil.print_and_log(message="Error creating list of FC's inside FD. FD contents not processed: {fd}. {ex}".format(fd=fd, ex=e),
-                                 log_level=myutil.WARNING_LEVEL)
+                                 log_level=myutil.ERROR_LEVEL)
             continue
 
         if TURN_ON_WRITE_OUTPUT_TO_CSV.value:
@@ -254,7 +254,7 @@ def main():
         else:
             myutil.print_and_log(
                 message="Error: arcpy.ListFeatureClasses returned {fc_list}. Expected list. Feature Dataset not processed: {fd}".format(fc_list=feature_classes_list, fd=fd),
-                log_level=myutil.WARNING_LEVEL)
+                log_level=myutil.ERROR_LEVEL)
             continue
 
         try:
